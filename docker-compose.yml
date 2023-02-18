@@ -1,0 +1,48 @@
+version: "3.7"
+
+#networks:
+#    default:
+#      name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-net-${COMPOSE_APP_VERSION}
+#      driver: bridge
+#      ipam:
+#        driver: default
+#        config:
+#          - subnet: 172.22.0.0/24
+#      driver_opts:
+#        com.docker.network.bridge.name: br_docker_ps
+services:
+  mariadb:
+    image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-mariadb:${COMPOSE_APP_VERSION}
+    container_name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-mariadb-${COMPOSE_APP_VERSION}
+    build:
+      context: deployment
+      dockerfile: docker/mariadb/Dockerfile
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_USER=dbuser"
+      - "MYSQL_PASSWORD=123456"
+      - "MYSQL_DATABASE=auction"
+#    ports:
+#      - ${MARIADB_PORT_MAP}
+  redis:
+    image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-redis:${COMPOSE_APP_VERSION}
+    container_name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-redis-${COMPOSE_APP_VERSION}
+    build:
+      context: deployment
+      dockerfile: docker/redis/Dockerfile
+    environment:
+      - "REDIS_PASSWORD=secret"
+      - "REDIS_ALLOW_REMOTE_CONNECTIONS=yes"
+#    ports:
+#      - ${REDIS_INSTANCE_PORT}
+  auction:
+    image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-go:${COMPOSE_APP_VERSION}
+    container_name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-go-app-${COMPOSE_APP_VERSION}
+    build:
+      context: .
+      dockerfile: ./deployment/Dockerfile
+    links:
+      - redis
+      - mariadb
+    ports:
+      - "3000:3000"
