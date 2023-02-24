@@ -34,8 +34,8 @@ services:
       context: deployment
       dockerfile: docker/redis/Dockerfile
     environment:
-      - REDIS_PASSWORD=secret
       - REDIS_ALLOW_REMOTE_CONNECTIONS=yes
+      - ALLOW_EMPTY_PASSWORD=yes
     networks:
       - app_network
 #    ports:

@@ -8,6 +8,8 @@ import (
 	"github.com/go-redis/redis/v8"
 
 	"github.com/L1LSunflower/auction/config"
+	"github.com/L1LSunflower/auction/pkg/logger"
+	"github.com/L1LSunflower/auction/pkg/logger/message"
 )
 
 type RedisConnection struct {
@@ -42,6 +44,7 @@ func RedisInstance() *RedisConnection {
 
 func redisConnect() (*RedisConnection, error) {
 	cfg := config.GetConfig()
+	logger.Log.Info(message.NewMessage(fmt.Sprintf("Redis address: %s, Redis Port: %s, Redis Password: %s\n", cfg.Redis.Address, cfg.Redis.Port, cfg.Redis.Password)))
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Address, cfg.Redis.Port),
 		Password: cfg.Redis.Password,

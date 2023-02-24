@@ -61,9 +61,9 @@ func GetConfig() *Config {
 					DBString: getValue("DB_STRING", ""),
 				},
 				Redis: &Redis{
-					Address:  getValue("REDIS_ADDRESS", ""),
-					Port:     getValue("REDIS_PORT", ""),
-					Password: getValue("REDIS_PASSWORD", "secret"),
+					Address:  getValue("REDIS_ADDRESS", "redis"),
+					Port:     getValue("REDIS_PORT", "6379"),
+					Password: getValue("REDIS_PASSWORD", ""),
 				},
 				Log: &LogConfig{
 					Level:  getValue("LOG_LEVEL", message.InfoLevel),

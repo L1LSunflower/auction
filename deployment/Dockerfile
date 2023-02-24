@@ -4,7 +4,7 @@ RUN apk update && \
     apk upgrade && \
     apk add gcc && \
     apk add musl-dev && \
-    apk add make
+    apk add make 
 
 COPY . /go/src
 WORKDIR /go/src
