@@ -5,10 +5,10 @@ build-goose:
 	go build -o goose ./cmd/goose/*.go
 
 migrate:
-	GOOSE_DRIVER="mysql" GOOSE_DBSTRING="root:secret@tcp(localhost:3306)/auction" ./goose -dir internal/db/migrations up
+	GOOSE_DRIVER="mysql" GOOSE_DBSTRING="root:secret_for_root@tcp(localhost:3606)/auction" ./goose -dir internal/db/migrations up
 
 migrate-rollback:
-	GOOSE_DRIVER="mysql" GOOSE_DBSTRING="root:secret@tcp(localhost:3306)/auction" ./goose -dir internal/db/migrations reset
+	GOOSE_DRIVER="mysql" GOOSE_DBSTRING="root:secret_for_root@tcp(localhost:3606)/auction" ./goose -dir internal/db/migrations reset
 
 run-on-server:
 	go build -o auction app/main.go \

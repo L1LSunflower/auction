@@ -9,8 +9,7 @@ create table auction.auction (
     description text not null,
     start_price float null,
     minimal_price float not null,
-    auction_period int not null,
-    is_active tinyint null,
+    status varchar(10) not null,
     started_at timestamp null,
     ended_at timestamp null,
     created_at timestamp not null,
@@ -23,9 +22,10 @@ create table auction.auction (
     index (item_id),
     index (title),
     index (minimal_price),
-    index (auction_period),
     index (created_at),
-    index (created_at, minimal_price, auction_period)
+    index (created_at, minimal_price),
+    index (started_at),
+    index (started_at, ended_at)
 );
 -- +goose StatementEnd
 

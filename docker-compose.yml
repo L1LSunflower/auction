@@ -10,6 +10,7 @@ version: "3.7"
 #          - subnet: 172.22.0.0/24
 #      driver_opts:
 #        com.docker.network.bridge.name: br_docker_ps
+
 services:
   mariadb:
     image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-mariadb:${COMPOSE_APP_VERSION}
@@ -18,10 +19,12 @@ services:
       context: deployment
       dockerfile: docker/mariadb/Dockerfile
     environment:
-      - "MYSQL_ROOT_PASSWORD=secret"
-      - "MYSQL_USER=dbuser"
-      - "MYSQL_PASSWORD=123456"
-      - "MYSQL_DATABASE=auction"
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_USER=dbuser
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=auction
+    networks:
+      - app_network
 #    ports:
 #      - ${MARIADB_PORT_MAP}
   redis:
@@ -31,8 +34,10 @@ services:
       context: deployment
       dockerfile: docker/redis/Dockerfile
     environment:
-      - "REDIS_PASSWORD=secret"
-      - "REDIS_ALLOW_REMOTE_CONNECTIONS=yes"
+      - REDIS_PASSWORD=secret
+      - REDIS_ALLOW_REMOTE_CONNECTIONS=yes
+    networks:
+      - app_network
 #    ports:
 #      - ${REDIS_INSTANCE_PORT}
   auction:
@@ -41,8 +46,24 @@ services:
     build:
       context: .
       dockerfile: ./deployment/Dockerfile
-    links:
+    depends_on:
       - redis
       - mariadb
     ports:
-      - "3000:3000"
+      - "4000:3000"
+    networks:
+      - app_network
+
+#  busybox:
+#    image: busybox
+#    container_name: busy_box_v1
+#    command: [ "/bin/busybox", "httpd", "-f", "-p", "8080" ]
+#    working_dir: /
+#    environment:
+#        SECRET_KEY2: secret
+#    networks:
+#      - app_network
+
+networks:
+  app_network:
+    driver: bridge

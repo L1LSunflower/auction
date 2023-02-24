@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/domain/repositories/db_repository"
-	"github.com/L1LSunflower/auction/internal/domain/repositories/redis_repository"
+	redis_repository "github.com/L1LSunflower/auction/internal/domain/repositories/redis_repository/users"
 	"github.com/L1LSunflower/auction/internal/domain/services"
 	userRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_tx"
@@ -38,7 +38,8 @@ func SignUp(request *userRequest.SignUp) (*entities.User, error) {
 		return nil, err
 	}
 
-	if err = redis_repository.UserInterface.StoreUserCode(uid.String(), code); err != nil {
+	redisRepo := redis_repository.GetUsesInterface()
+	if err = redisRepo.StoreUserCode(uid.String(), code); err != nil {
 		return nil, err
 	}
 
@@ -52,7 +53,7 @@ func SignUp(request *userRequest.SignUp) (*entities.User, error) {
 		//IsActive:  1,
 	}
 
-	if err = redis_repository.UserInterface.Create(user); err != nil {
+	if err = redisRepo.Create(user); err != nil {
 		return nil, err
 	}
 
@@ -65,7 +66,8 @@ func Confirm(parentCtx context.Context, db *sql.DB, request *userRequest.Confirm
 		err  error
 	)
 
-	code, err := redis_repository.UserInterface.GetUserCode(request.ID)
+	redisRepo := redis_repository.GetUsesInterface()
+	code, err := redisRepo.GetUserCode(request.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +82,7 @@ func Confirm(parentCtx context.Context, db *sql.DB, request *userRequest.Confirm
 	}
 	defer context_with_tx.TxRollback(ctx)
 
-	if user, err = redis_repository.UserInterface.User(request.ID); err != nil {
+	if user, err = redisRepo.User(request.ID); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +91,7 @@ func Confirm(parentCtx context.Context, db *sql.DB, request *userRequest.Confirm
 	}
 
 	tokens := services.GenerateToken()
-	if err = redis_repository.UserInterface.StoreToken(tokens); err != nil {
+	if err = redisRepo.StoreToken(tokens); err != nil {
 		return nil, err
 	}
 
@@ -115,7 +117,8 @@ func SignIn(parentCtx context.Context, db *sql.DB, request *userRequest.SignIn) 
 	}
 
 	tokens := services.GenerateToken()
-	if err = redis_repository.UserInterface.StoreToken(tokens); err != nil {
+	redisRepo := redis_repository.GetUsesInterface()
+	if err = redisRepo.StoreToken(tokens); err != nil {
 		return nil, err
 	}
 
@@ -124,7 +127,8 @@ func SignIn(parentCtx context.Context, db *sql.DB, request *userRequest.SignIn) 
 }
 
 func RefreshToken(request *userRequest.Tokens) (*entities.Tokens, error) {
-	tokens, err := redis_repository.UserInterface.Tokens(request.AccessToken)
+	redisRepo := redis_repository.GetUsesInterface()
+	tokens, err := redisRepo.Tokens(request.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +138,7 @@ func RefreshToken(request *userRequest.Tokens) (*entities.Tokens, error) {
 	}
 
 	newTokens := services.GenerateToken()
-	if err = redis_repository.UserInterface.StoreToken(newTokens); err != nil {
+	if err = redisRepo.StoreToken(newTokens); err != nil {
 		return nil, err
 	}
 

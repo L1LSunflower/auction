@@ -2,6 +2,7 @@ package users
 
 import (
 	"github.com/L1LSunflower/auction/internal/domain/entities"
+	redisConn "github.com/L1LSunflower/auction/pkg/redisdb"
 )
 
 type UserInterface interface {
@@ -14,6 +15,6 @@ type UserInterface interface {
 }
 
 func GetUsesInterface() UserInterface {
-	//return &Repository{redisClient: redisConn.RedisInstance().RedisClient}
-	return &Repository{}
+	return &Repository{redisClient: redisConn.RedisInstance().RedisClient}
+	//return &Repository{}
 }
