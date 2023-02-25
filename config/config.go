@@ -58,7 +58,7 @@ func GetConfig() *Config {
 				BearerToken: getValue("BEARER_TOKEN", "fb250092-974c-44a7-b4ed-4e71b5875886"),
 				DB: &DB{
 					DBDriver: getValue("DB_DRIVER", "mysql"),
-					DBString: getValue("DB_STRING", ""),
+					DBString: getValue("DB_STRING", "root:secret@tcp(mariadb:3306)/auction?parseTime=true"),
 				},
 				Redis: &Redis{
 					Address:  getValue("REDIS_ADDRESS", "redis"),

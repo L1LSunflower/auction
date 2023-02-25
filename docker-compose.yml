@@ -25,8 +25,7 @@ services:
       - MYSQL_DATABASE=auction
     networks:
       - app_network
-#    ports:
-#      - ${MARIADB_PORT_MAP}
+
   redis:
     image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-redis:${COMPOSE_APP_VERSION}
     container_name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-redis-${COMPOSE_APP_VERSION}
@@ -38,8 +37,7 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     networks:
       - app_network
-#    ports:
-#      - ${REDIS_INSTANCE_PORT}
+
   auction:
     image: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-go:${COMPOSE_APP_VERSION}
     container_name: ${COMPOSE_APP_NAME}-${COMPOSE_BRANCH}-go-app-${COMPOSE_APP_VERSION}
