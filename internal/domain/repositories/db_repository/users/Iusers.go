@@ -10,6 +10,8 @@ type UserInterface interface {
 	Create(ctx context.Context, user *entities.User) error
 	User(ctx context.Context, id string) (*entities.User, error)
 	UserByPhone(ctx context.Context, phone string) (*entities.User, error)
+	Update(ctx context.Context, user *entities.User) error
+	Delete(ctx context.Context, id string) error
 }
 
 func NewRepository() UserInterface {

@@ -49,3 +49,23 @@ func parseParam(args *fasthttp.Args, nameParams string) (int, error) {
 	return v, nil
 
 }
+
+func Filter(ctx *fiber.Ctx) ([]string, error) {
+	var where = []string{}
+
+	for i := 1; i <= 10; i++ {
+		if tag := ctx.Get(fmt.Sprintf("tag%d", i)); tag != "" {
+			where = append(where, fmt.Sprintf("tag%d", i)+"="+tag)
+		}
+	}
+
+	if isActive := ctx.Get("is_active"); isActive == "true" {
+		where = append(where, "is_active=1")
+	}
+
+	if category := ctx.Get("category"); category != "" {
+		where = append(where, fmt.Sprintf("category=%s", category))
+	}
+
+	return where, nil
+}

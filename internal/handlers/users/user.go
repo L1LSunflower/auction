@@ -2,7 +2,9 @@ package users
 
 import (
 	"context"
-
+	"errors"
+	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
+	"github.com/L1LSunflower/auction/pkg/redisdb"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/L1LSunflower/auction/config"
@@ -20,7 +22,10 @@ func SignUp(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	user, err := userService.SignUp(request)
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	user, err := userService.SignUp(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
@@ -35,12 +40,19 @@ func SignIn(ctx *fiber.Ctx) error {
 	}
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
-	tokens, err := userService.SignIn(context.Background(), dbConn, request)
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	tokens, id, err := userService.SignIn(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, tokens)
+	return responses.NewSuccessResponse(ctx, fiber.Map{
+		"status":  "success",
+		"access":  tokens.AccessToken,
+		"refresh": tokens.RefreshToken,
+		"id":      id,
+	})
 }
 
 func Confirm(ctx *fiber.Ctx) error {
@@ -50,7 +62,9 @@ func Confirm(ctx *fiber.Ctx) error {
 	}
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
-	tokens, err := userService.Confirm(context.Background(), dbConn, request)
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	tokens, err := userService.Confirm(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
@@ -65,7 +79,9 @@ func GetUser(ctx *fiber.Ctx) error {
 	}
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
-	user, err := userService.User(context.Background(), dbConn, request)
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	user, err := userService.User(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
@@ -79,10 +95,35 @@ func Refresh(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	tokens, err := userService.RefreshToken(request)
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	tokens, err := userService.RefreshToken(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
 	return responses.NewSuccessResponse(ctx, tokens)
+}
+
+func Restore(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.RestorePassword)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errors.New("failed to start context with dependencies"))
+	}
+	if err = userService.RestorePassword(contxt, request); err != nil {
+		return responses.NewFailedResponse(ctx, errors.New("failed to restore passwrod"))
+	}
+
+	return responses.NewSuccessResponse(ctx, fiber.Map{
+		"status":  "success",
+		"message": "otp sent",
+	})
 }

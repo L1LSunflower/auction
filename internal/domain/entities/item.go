@@ -5,7 +5,7 @@ import "time"
 type Item struct {
 	ID          int
 	UserID      int
-	CategoryID  int
+	Category    string
 	Name        string
 	Tag1        string
 	Tag2        string

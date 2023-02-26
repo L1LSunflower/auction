@@ -12,7 +12,7 @@ import (
 
 func App() {
 	app := fiber.New(fiber.Config{
-		//Prefork:                 true,
+		BodyLimit:               100 * 1024 * 1024,
 		ServerHeader:            "accept",
 		StrictRouting:           true,
 		EnableTrustedProxyCheck: true,

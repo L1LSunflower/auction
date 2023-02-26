@@ -11,7 +11,7 @@ type User struct {
 	City      int       `db:"cities,omitempty"`
 	Password  string    `db:"password,required"`
 	IsActive  int       `db:"is_active,required"`
-	CreateAt  time.Time `db:"created_at,required"`
+	CreatedAt time.Time `db:"created_at,required"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 	DeleteAt  time.Time `db:"deleted_at,omitempty"`
 }

@@ -61,3 +61,26 @@ func GetUserValidator(ctx *fiber.Ctx) error {
 
 	return ctx.Next()
 }
+
+func RestoreValidator(ctx *fiber.Ctx) error {
+	request := &userRequest.RestorePassword{}
+	if err := ctx.BodyParser(request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+	return ctx.Next()
+}
+
+func RefreshValidator(ctx *fiber.Ctx) error {
+	request := &userRequest.RefreshPassword{}
+	if err := ctx.BodyParser(request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	request.AccessToken = ctx.Get("access")
+	request.RefreshToken = ctx.Get("refresh")
+
+	ctx.Locals(requests.RequestKey, request)
+	return ctx.Next()
+}

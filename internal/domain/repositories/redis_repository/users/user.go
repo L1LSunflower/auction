@@ -1,8 +1,9 @@
 package users
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/go-redis/redis/v8"
+	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"time"
 
 	"github.com/L1LSunflower/auction/internal/domain/entities"
@@ -14,29 +15,33 @@ const (
 	timeExpirationToken = 1 * time.Hour
 )
 
-type Repository struct {
-	redisClient *redis.Client
-}
+type Repository struct{}
 
-func (r *Repository) Create(user *entities.User) error {
+func (r *Repository) Create(ctx context.Context, user *entities.User) error {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return err
+	}
+
 	dataBytes, err := json.Marshal(user)
 	if err != nil {
 		return err
 	}
-	if err := r.redisClient.Set(r.redisClient.Context(), user.ID, dataBytes, timeExpirationUser).Err(); err != nil {
+	if err := rClient.Set(rClient.Context(), user.ID, dataBytes, timeExpirationUser).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) User(id string) (*entities.User, error) {
-	var (
-		user *entities.User
-		err  error
-	)
+func (r *Repository) User(ctx context.Context, id string) (*entities.User, error) {
+	var user *entities.User
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	userString, err := r.redisClient.Get(r.redisClient.Context(), id).Result()
+	userString, err := rClient.Get(rClient.Context(), id).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -48,16 +53,26 @@ func (r *Repository) User(id string) (*entities.User, error) {
 	return user, nil
 }
 
-func (r *Repository) StoreUserCode(id, code string) error {
-	if err := r.redisClient.Set(r.redisClient.Context(), id+"_code", code, timeExpirationCode).Err(); err != nil {
+func (r *Repository) StoreUserCode(ctx context.Context, id, code string) error {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := rClient.Set(rClient.Context(), id+"_code", code, timeExpirationCode).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) GetUserCode(id string) (string, error) {
-	code, err := r.redisClient.Get(r.redisClient.Context(), id+"_code").Result()
+func (r *Repository) GetUserCode(ctx context.Context, id string) (string, error) {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	code, err := rClient.Get(rClient.Context(), id+"_code").Result()
 	if err != nil {
 		return "", err
 	}
@@ -65,16 +80,26 @@ func (r *Repository) GetUserCode(id string) (string, error) {
 	return code, nil
 }
 
-func (r *Repository) StoreToken(tokens *entities.Tokens) error {
-	if err := r.redisClient.Set(r.redisClient.Context(), tokens.AccessToken, tokens.RefreshToken, timeExpirationToken).Err(); err != nil {
+func (r *Repository) StoreToken(ctx context.Context, tokens *entities.Tokens) error {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := rClient.Set(rClient.Context(), tokens.AccessToken+":access", tokens.RefreshToken, timeExpirationToken).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) Tokens(accessToken string) (*entities.Tokens, error) {
-	refreshToken, err := r.redisClient.Get(r.redisClient.Context(), accessToken).Result()
+func (r *Repository) Tokens(ctx context.Context, accessToken string) (*entities.Tokens, error) {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := rClient.Get(rClient.Context(), accessToken).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -83,4 +108,19 @@ func (r *Repository) Tokens(accessToken string) (*entities.Tokens, error) {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (r *Repository) TokenByKey(ctx context.Context, tokenString string) (string, error) {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := rClient.Get(rClient.Context(), tokenString).Result()
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, err
 }

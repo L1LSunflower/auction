@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/L1LSunflower/auction/internal/domain/entities"
-	"github.com/L1LSunflower/auction/internal/tools/context_with_tx"
-	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"strings"
+
+	"github.com/L1LSunflower/auction/internal/domain/aggregates"
+	"github.com/L1LSunflower/auction/internal/domain/entities"
+	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
+	"github.com/L1LSunflower/auction/internal/tools/metadata"
 )
 
 const (
@@ -18,7 +20,7 @@ const (
 type Repository struct{}
 
 func (r *Repository) Create(ctx context.Context, auction *entities.Auction) error {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	tx, err := context_with_depends.TxFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -53,13 +55,13 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 }
 
 func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, error) {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	auction := &entities.Auction{}
-	winnerID := sql.NullInt64{}
+	winnerID := sql.NullString{}
 	startedAt := sql.NullTime{}
 	endedAt := sql.NullTime{}
 	fields := []string{
@@ -79,7 +81,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	}
 
 	query := fmt.Sprintf("select %s from auction where id=? and deleted_at is null", strings.Join(fields, fieldsSeparator))
-	if err := tx.QueryRow(
+	if err := db.QueryRow(
 		query,
 		id,
 	).Scan(
@@ -99,115 +101,82 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	); err != nil {
 		return nil, err
 	}
-	auction.WinnerID = int(winnerID.Int64)
+	auction.WinnerID = winnerID.String
 	auction.StartedAt = startedAt.Time
 	auction.EndedAt = endedAt.Time
 
 	return auction, nil
 }
 
-func (r *Repository) Auctions(ctx context.Context, where []string, metadata *metadata.Metadata) ([]*entities.Auction, error) {
-	tx, err := context_with_tx.TxFromContext(ctx)
+func (r *Repository) Auctions(ctx context.Context, where []string, metadata *metadata.Metadata) (*aggregates.AuctionsItem, error) {
+	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		auctions []*entities.Auction
+		auctions = &aggregates.AuctionsItem{}
 		query    string
 	)
 	fields := []string{
-		"id",
-		"owner_id",
-		"winner_id",
-		"item_id",
-		"title",
-		"description",
-		"start_price",
-		"minimal_price",
-		"status",
-		"started_at",
-		"ended_at",
-		"created_at",
-		"updated_at",
+		"a.id",
+		"a.status",
+		"i.files",
+		// TODO: add params as json object in database
 	}
 
 	if len(where) > 0 {
-		query = fmt.Sprintf("select %s from auction where deleted_at is null and %s limit ? offset ?", strings.Join(fields, fieldsSeparator), strings.Join(where, whereSeparator))
+		query = fmt.Sprintf("select %s from auction a join items i on a.item_id=i.id where a.deleted_at is null and %s limit ? offset ?", strings.Join(fields, fieldsSeparator), strings.Join(where, whereSeparator))
 	} else {
-		query = fmt.Sprintf("select %s from auction where deleted_at is null limit ? offset ?", strings.Join(fields, fieldsSeparator))
+		query = fmt.Sprintf("select %s from auction a join items i on a.item_id=i.id where a.deleted_at is null limit ? offset ?", strings.Join(fields, fieldsSeparator))
 	}
 
-	rows, err := tx.Query(query, metadata.Limit, metadata.Offset)
+	rows, err := db.Query(query, metadata.Limit, metadata.Offset)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		auction := &entities.Auction{}
-		winnerID := sql.NullInt64{}
-		startedAt := sql.NullTime{}
-		endedAt := sql.NullTime{}
+		aItem := &aggregates.AuctItem{}
 		if err = rows.Scan(
-			&auction.ID,
-			&auction.OwnerID,
-			&winnerID,
-			&auction.ItemID,
-			&auction.Title,
-			&auction.Description,
-			&auction.StartPrice,
-			&auction.MinPrice,
-			&auction.Status,
-			&startedAt,
-			&endedAt,
-			&auction.CreatedAt,
-			&auction.UpdatedAt,
+			&aItem.ID,
+			&aItem.Status,
+			&aItem.Files,
 		); err != nil {
 			return nil, err
 		}
-		auction.WinnerID = int(winnerID.Int64)
-		auction.StartedAt = startedAt.Time
-		auction.EndedAt = endedAt.Time
 
-		auctions = append(auctions, auction)
+		auctions.AuctsItem = append(auctions.AuctsItem, aItem)
 	}
 
 	return auctions, nil
 }
 
 func (r *Repository) Update(ctx context.Context, auction *entities.Auction) error {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	tx, err := context_with_depends.TxFromContext(ctx)
 	if err != nil {
 		return err
 	}
 
 	fields := []string{
-		"owner_id=?",
 		"winner_id=?",
-		"item_id=?",
 		"title=?",
 		"description=?",
 		"start_price=?",
 		"minimal_price=?",
 		"status=?",
-		"started_at=?",
-		"ended_at=?",
 		"updated_at=now()",
 	}
 
 	query := fmt.Sprintf("update auction set %s where id=?", strings.Join(fields, fieldsSeparator))
 	if _, err = tx.Exec(
 		query,
-		auction.OwnerID,
 		auction.WinnerID,
-		auction.ItemID,
 		auction.Title,
 		auction.Description,
 		auction.StartPrice,
 		auction.MinPrice,
 		auction.Status,
-		auction.StartedAt,
-		auction.EndedAt,
 		auction.ID,
 	); err != nil {
 		return err
@@ -217,7 +186,7 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 }
 
 func (r *Repository) Start(ctx context.Context, auction *entities.Auction) error {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	tx, err := context_with_depends.TxFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -234,7 +203,7 @@ func (r *Repository) Start(ctx context.Context, auction *entities.Auction) error
 }
 
 func (r *Repository) End(ctx context.Context, auction *entities.Auction) error {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	tx, err := context_with_depends.TxFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -251,7 +220,7 @@ func (r *Repository) End(ctx context.Context, auction *entities.Auction) error {
 }
 
 func (r *Repository) Delete(ctx context.Context, auction *entities.Auction) error {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	tx, err := context_with_depends.TxFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -268,7 +237,7 @@ func (r *Repository) Delete(ctx context.Context, auction *entities.Auction) erro
 }
 
 func (r *Repository) ByOwnerID(ctx context.Context, ownerID int) (*entities.Auction, error) {
-	tx, err := context_with_tx.TxFromContext(ctx)
+	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -291,13 +260,13 @@ func (r *Repository) ByOwnerID(ctx context.Context, ownerID int) (*entities.Auct
 	}
 
 	query := fmt.Sprintf("select %s from auction where owner_id=? and deleted_at is null group by created_at desc limit 1", strings.Join(fields, fieldsSeparator))
-	rows, err := tx.Query(query, ownerID)
+	rows, err := db.Query(query, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		winnerID := sql.NullInt64{}
+		winnerID := sql.NullString{}
 		startedAt := sql.NullTime{}
 		endedAt := sql.NullTime{}
 		if err = rows.Scan(
@@ -317,10 +286,24 @@ func (r *Repository) ByOwnerID(ctx context.Context, ownerID int) (*entities.Auct
 		); err != nil {
 			return nil, err
 		}
-		auction.WinnerID = int(winnerID.Int64)
+		auction.WinnerID = winnerID.String
 		auction.StartedAt = startedAt.Time
 		auction.EndedAt = endedAt.Time
 	}
 
 	return auction, nil
+}
+
+func (r *Repository) Count(ctx context.Context) (int, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	if err = db.QueryRow("select count(*) from auction").Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

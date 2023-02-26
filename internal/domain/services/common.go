@@ -1,7 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"github.com/L1LSunflower/auction/internal/domain/entities"
+	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"math/rand"
 	"time"
 )
@@ -34,4 +36,20 @@ func stringWithCharset(length int, charset string) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func GetLimitAndOffset(metadata *metadata.Metadata) error {
+
+	metadata.LastPage = metadata.Total / metadata.PerPage
+	if metadata.Total%metadata.PerPage != 0 {
+		metadata.LastPage++
+	}
+
+	if metadata.CurrentPage > metadata.LastPage {
+		return fmt.Errorf("failed to get page")
+	}
+
+	metadata.Limit, metadata.Offset = metadata.PerPage, (metadata.CurrentPage-1)*metadata.PerPage
+
+	return nil
 }

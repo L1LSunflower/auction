@@ -5,7 +5,7 @@ import "time"
 type Auction struct {
 	ID          int
 	OwnerID     int
-	WinnerID    int
+	WinnerID    string
 	ItemID      int
 	Title       string
 	Description string

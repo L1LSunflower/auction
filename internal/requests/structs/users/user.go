@@ -28,8 +28,24 @@ type User struct {
 	ID string
 }
 
+type Update struct {
+	ID        string
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
+	Password  string `json:"password"`
+}
+
+type Delete struct {
+	ID string
+}
+
 type RestorePassword struct {
-	Phone       string `json:"phone,required"`
-	OldPassword string `json:"old_password,required"`
-	NewPassword string `json:"new_password,required"`
+	Phone string `json:"phone,required"`
+}
+
+type RefreshPassword struct {
+	AccessToken  string
+	RefreshToken string
 }
