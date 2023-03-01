@@ -1,2 +1,4 @@
-.goose
-.auction
+.idea/
+static/
+goose
+auction
