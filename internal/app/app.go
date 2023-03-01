@@ -16,8 +16,8 @@ func App() {
 		ServerHeader:            "accept",
 		StrictRouting:           true,
 		EnableTrustedProxyCheck: true,
-		TrustedProxies:          []string{"http://localhost:3000", "http://localhost:8100", "http://192.168.0.16:3000", "http://192.168.0.14:8100"},
-		RequestMethods:          []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		//TrustedProxies:          []string{"http://localhost:3000", "http://localhost:8100", "http://192.168.0.16:3000", "http://192.168.0.14:8100"},
+		RequestMethods: []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
 	})
 
 	app.Use(cors.New())
@@ -30,9 +30,4 @@ func App() {
 	if err := app.Listen("0.0.0.0:" + strconv.Itoa(cfg.AppPort)); err != nil {
 		log.Fatal(err)
 	}
-
-	//if err := sms.SendSMS("+77479824031", "test code: 1234"); err != nil {
-	//	log.Fatal(err)
-	//}
-	//log.Printf("success send sms!")
 }

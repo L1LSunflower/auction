@@ -12,6 +12,7 @@ type UserInterface interface {
 	UserByPhone(ctx context.Context, phone string) (*entities.User, error)
 	Update(ctx context.Context, user *entities.User) error
 	Delete(ctx context.Context, id string) error
+	UpdatePassword(ctx context.Context, user *entities.User) error
 }
 
 func NewRepository() UserInterface {

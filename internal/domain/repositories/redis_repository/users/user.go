@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"time"
 
@@ -10,8 +11,11 @@ import (
 )
 
 const (
-	timeExpirationUser  = 40 * time.Minute
-	timeExpirationCode  = 30 * time.Minute
+	userKey             = "users:data"
+	userOtpKey          = "users:otp"
+	userTokens          = "users:tokens"
+	timeExpirationUser  = 15 * time.Minute
+	timeExpirationCode  = 15 * time.Minute
 	timeExpirationToken = 1 * time.Hour
 )
 
@@ -27,21 +31,37 @@ func (r *Repository) Create(ctx context.Context, user *entities.User) error {
 	if err != nil {
 		return err
 	}
-	if err := rClient.Set(rClient.Context(), user.ID, dataBytes, timeExpirationUser).Err(); err != nil {
+	if err := rClient.Set(rClient.Context(), fmt.Sprintf("%s:%s", userKey, user.Phone), dataBytes, timeExpirationUser).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) User(ctx context.Context, id string) (*entities.User, error) {
+func (r *Repository) ByPhone(ctx context.Context, id string) (*entities.User, error) {
 	var user *entities.User
 	rClient, err := context_with_depends.GetRedis(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	userString, err := rClient.Get(rClient.Context(), id).Result()
+	userString, err := rClient.Get(rClient.Context(), userKey).Result()
+
+	if err = json.Unmarshal([]byte(userString), &user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *Repository) User(ctx context.Context, phone string) (*entities.User, error) {
+	var user *entities.User
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userString, err := rClient.Get(rClient.Context(), fmt.Sprintf("%s:%s", userKey, phone)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +79,7 @@ func (r *Repository) StoreUserCode(ctx context.Context, id, code string) error {
 		return err
 	}
 
-	if err := rClient.Set(rClient.Context(), id+"_code", code, timeExpirationCode).Err(); err != nil {
+	if err := rClient.Set(rClient.Context(), fmt.Sprintf("%s:%s%s", userOtpKey, id, "otp"), code, timeExpirationCode).Err(); err != nil {
 		return err
 	}
 
@@ -72,7 +92,7 @@ func (r *Repository) GetUserCode(ctx context.Context, id string) (string, error)
 		return "", err
 	}
 
-	code, err := rClient.Get(rClient.Context(), id+"_code").Result()
+	code, err := rClient.Get(rClient.Context(), fmt.Sprintf("%s:%s%s", userOtpKey, id, "otp")).Result()
 	if err != nil {
 		return "", err
 	}
@@ -80,47 +100,66 @@ func (r *Repository) GetUserCode(ctx context.Context, id string) (string, error)
 	return code, nil
 }
 
-func (r *Repository) StoreToken(ctx context.Context, tokens *entities.Tokens) error {
+func (r *Repository) StoreToken(ctx context.Context, userID string, tokens *entities.Tokens) error {
 	rClient, err := context_with_depends.GetRedis(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := rClient.Set(rClient.Context(), tokens.AccessToken+":access", tokens.RefreshToken, timeExpirationToken).Err(); err != nil {
+	tokenBytes, err := json.Marshal(tokens)
+	if err != nil {
+		return err
+	}
+
+	if err := rClient.Set(rClient.Context(), fmt.Sprintf("%s:%s%s", userTokens, userID, "tokens"), tokenBytes, timeExpirationToken).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) Tokens(ctx context.Context, accessToken string) (*entities.Tokens, error) {
+func (r *Repository) Tokens(ctx context.Context, userID string) (*entities.Tokens, error) {
+	tokens := &entities.Tokens{}
 	rClient, err := context_with_depends.GetRedis(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := rClient.Get(rClient.Context(), accessToken).Result()
+	tokensString, err := rClient.Get(rClient.Context(), fmt.Sprintf("%s:%s%s", userTokens, userID, "tokens")).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	return &entities.Tokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	if err = json.Unmarshal([]byte(tokensString), tokens); err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
 }
 
-func (r *Repository) TokenByKey(ctx context.Context, tokenString string) (string, error) {
+func (r *Repository) StoreRestoreCode(ctx context.Context, code, id string) error {
+	rClient, err := context_with_depends.GetRedis(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := rClient.Set(rClient.Context(), fmt.Sprintf("%s:%s%s", userOtpKey, id, "otp"), code, timeExpirationToken).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) GetRestoreCode(ctx context.Context, id string) (string, error) {
 	rClient, err := context_with_depends.GetRedis(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	token, err := rClient.Get(rClient.Context(), tokenString).Result()
-
+	code, err := rClient.Get(rClient.Context(), fmt.Sprintf("%s:%s%s", userOtpKey, id, "otp")).Result()
 	if err != nil {
 		return "", err
 	}
 
-	return token, err
+	return code, nil
 }

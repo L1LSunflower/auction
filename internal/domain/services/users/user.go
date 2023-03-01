@@ -7,12 +7,17 @@ import (
 	"github.com/L1LSunflower/auction/internal/domain/repositories/db_repository"
 	userRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
+	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 )
 
 func User(ctx context.Context, request *userRequest.User) (*entities.User, error) {
 	user, err := db_repository.UserInterface.User(ctx, request.ID)
 	if err != nil {
-		return nil, errors.New("that user does not exist")
+		return nil, errorhandler.ErrUserExist
+	}
+
+	if user.CreatedAt.IsZero() {
+		return nil, errorhandler.ErrUserExist
 	}
 
 	return user, nil

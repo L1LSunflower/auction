@@ -20,14 +20,15 @@ func NewFailedResponse(ctx *fiber.Ctx, err error) error {
 
 	if typeError, ok = errorhandler.TypeErrors[err.Error()]; !ok {
 		typeError = &errorhandler.TypeError{
-			StatusCode: fiber.StatusInternalServerError,
+			StatusCode: 999,
+			HttpCode:   fiber.StatusInternalServerError,
 		}
 	}
 
-	ctx.Status(typeError.StatusCode)
+	ctx.Status(typeError.HttpCode)
 	return ctx.JSON(&structs.ErrorResponse{
-		Status:  errorStatus,
-		Message: err.Error(),
+		StatusCode: typeError.StatusCode,
+		Message:    err.Error(),
 	})
 }
 

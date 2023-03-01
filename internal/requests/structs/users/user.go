@@ -6,7 +6,7 @@ type SignUp struct {
 	LastName  string `json:"last_name,required"`
 	Email     string `json:"email,required"`
 	Password  string `json:"password,required"`
-	City      int    `json:"city,omitempty"`
+	City      string `json:"city,omitempty"`
 }
 
 type SignIn struct {
@@ -15,13 +15,15 @@ type SignIn struct {
 }
 
 type Tokens struct {
+	ID           string
 	AccessToken  string
 	RefreshToken string `json:"refresh_token"`
 }
 
 type Confirm struct {
-	ID   string
-	Code string `json:"code"`
+	ID    string
+	Phone string `json:"phone"`
+	Code  string `json:"code"`
 }
 
 type User struct {
@@ -48,4 +50,10 @@ type RestorePassword struct {
 type RefreshPassword struct {
 	AccessToken  string
 	RefreshToken string
+}
+
+type ChangePassword struct {
+	Phone    string `json:"phone"`
+	Code     string `json:"code"`
+	Password string `json:"password"`
 }

@@ -22,19 +22,18 @@ func (r *Repository) Create(ctx context.Context, user *entities.User) error {
 
 	fields := []string{
 		"id",
-		"password",
+		"phone",
 		"email",
+		"password",
 		"first_name",
 		"last_name",
-		"phone",
 		"city",
-		"is_active",
 		"created_at",
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("insert into users (%s) values (?, ?, ?, ?, ?, ?, ?, 1, now(), now()) returning id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(query, user.ID, user.Password, user.Email, user.FirstName, user.LastName, user.Phone, user.City).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt); err != nil {
+	query := fmt.Sprintf("insert into users (%s) values (?, ?, ?, ?, ?, ?, ?, now(), now()) returning id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
+	if err = tx.QueryRow(query, user.ID, user.Phone, user.Email, user.Password, user.FirstName, user.LastName, user.City).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt); err != nil {
 		return err
 	}
 
@@ -50,24 +49,24 @@ func (r *Repository) User(ctx context.Context, id string) (*entities.User, error
 	user := &entities.User{}
 	fields := []string{
 		"id",
+		"phone",
 		"email",
+		"password",
 		"first_name",
 		"last_name",
-		"phone",
 		"city",
-		"is_active",
 		"created_at",
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("select %s from users where id=? and is_active=1 and deleted_at is not null", strings.Join(fields, fieldsSeparator))
+	query := fmt.Sprintf("select %s from users where id=?", strings.Join(fields, fieldsSeparator))
 	rows, err := tx.Query(query, id)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		if err = rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.Phone, &user.City, &user.IsActive, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		if err = rows.Scan(&user.ID, &user.Phone, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.City, &user.CreatedAt, &user.UpdatedAt); err != nil {
 			return nil, err
 		}
 	}
@@ -76,7 +75,7 @@ func (r *Repository) User(ctx context.Context, id string) (*entities.User, error
 }
 
 func (r *Repository) UserByPhone(ctx context.Context, phone string) (*entities.User, error) {
-	tx, err := context_with_depends.TxFromContext(ctx)
+	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,25 +83,24 @@ func (r *Repository) UserByPhone(ctx context.Context, phone string) (*entities.U
 	user := &entities.User{}
 	fields := []string{
 		"id",
+		"phone",
 		"email",
 		"password",
 		"first_name",
 		"last_name",
-		"phone",
 		"city",
-		"is_active",
 		"created_at",
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("select %s from users where phone=? and is_active=1 and deleted_at is null", strings.Join(fields, fieldsSeparator))
-	rows, err := tx.Query(query, phone)
+	query := fmt.Sprintf("select %s from users where phone=?", strings.Join(fields, fieldsSeparator))
+	rows, err := db.Query(query, phone)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		if err = rows.Scan(&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.Phone, &user.City, &user.IsActive, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		if err = rows.Scan(&user.ID, &user.Phone, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.City, &user.CreatedAt, &user.UpdatedAt); err != nil {
 			return nil, err
 		}
 	}
@@ -144,6 +142,19 @@ func (r *Repository) Delete(ctx context.Context, id string) error {
 	}
 
 	if _, err = tx.Exec("update users set deleted_at=now() where id=?", id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdatePassword(ctx context.Context, user *entities.User) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec("update users set password=? where id=?", user.Password, user.ID); err != nil {
 		return err
 	}
 
