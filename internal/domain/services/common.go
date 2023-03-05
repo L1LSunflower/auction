@@ -53,3 +53,19 @@ func GetLimitAndOffset(metadata *metadata.Metadata) error {
 
 	return nil
 }
+
+func CreateMapFromFiles(files []*entities.File) map[string]bool {
+	filesMap := make(map[string]bool)
+	for _, file := range files {
+		filesMap[file.Name] = true
+	}
+	return filesMap
+}
+
+func CreateMapFromTags(tags []*entities.Tag) map[string]bool {
+	tagsMap := make(map[string]bool)
+	for _, tag := range tags {
+		tagsMap[tag.Name] = true
+	}
+	return tagsMap
+}

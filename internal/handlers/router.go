@@ -28,6 +28,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Get("/user/:id", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
 
 	// Auction
+	/*middlewares.Auth(),*/
 	v1.Post("/auctions", middlewares.Auth(), auctionValidator.Create, auctionHandler.Create)
 	v1.Get("/auctions", middlewares.Auth(), auctionValidator.Auctions, auctionHandler.Auctions)
 	v1.Get("/auctions/:id", middlewares.Auth(), auctionValidator.Auction, auctionHandler.Auction)
@@ -37,6 +38,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
 
 	// File uploader
-	v1.Post("/upload_file", fileuploader.UploadFile)
-	v1.Delete("/delete_file/:fileName", fileuploader.DeleteFile)
+	app.Static("/static", "./static")
+	app.Post("/upload_file", middlewares.BearerAuth(), fileuploader.UploadFile)
+	app.Delete("/delete_file/:fileName", middlewares.BearerAuth(), fileuploader.DeleteFile)
 }

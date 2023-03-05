@@ -42,20 +42,6 @@ func StartDBTx(ctx context.Context) error {
 	return nil
 }
 
-//func StartRedisTx(ctx context.Context) error {
-//	var err error
-//	dep, ok := ctx.Value(depends).(*DBAndRedis)
-//	if !ok {
-//		return errors.New("failed to get dependencies")
-//	}
-//
-//	if dep.RedisDBTx, err = dep.Redis.Watch(context.Background()); err != nil {
-//
-//	}
-//
-//	return nil
-//}
-
 func GetDb(ctx context.Context) (*sql.DB, error) {
 	dep, ok := ctx.Value(depends).(*DBAndRedis)
 	if !ok {
@@ -89,12 +75,6 @@ func DBTxRollback(ctx context.Context) error {
 	}
 
 	tx.Rollback()
-	//if driverErr, ok := tx.Rollback().(*mysql.MySQLError); ok {
-	//	if driverErr.Number != 1042 {
-	//		return errors.New("failed to rollback transaction")
-	//	}
-	//}
-
 	ctx.Done()
 	return nil
 }

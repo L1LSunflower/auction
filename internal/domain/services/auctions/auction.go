@@ -10,157 +10,244 @@ import (
 	"github.com/L1LSunflower/auction/internal/domain/services"
 	auctionReq "github.com/L1LSunflower/auction/internal/requests/structs/auctions"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
+	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"github.com/L1LSunflower/auction/internal/tools/metadata"
+	"os"
 )
 
-func Create(ctx context.Context, request *auctionReq.Create) (*entities.Auction, error) {
-	if err := context_with_depends.StartDBTx(ctx); err != nil {
+func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.AuctionAggregation, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
 		return nil, err
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, err := db_repository.AuctionInterface.ByOwnerID(ctx, request.OwnerID)
-	if err != nil {
-		return nil, err
+	auctionAgg := &aggregates.AuctionAggregation{}
+
+	if auctionAgg.User, err = db_repository.UserInterface.User(ctx, request.OwnerID); err != nil {
+		return nil, errorhandler.InternalError
 	}
 
-	if !auction.CreatedAt.IsZero() {
-		return nil, errors.New("auction limit on auction owner id")
+	if auctionAgg.User.CreatedAt.IsZero() {
+		return nil, errorhandler.ErrUserNotExist
 	}
 
-	item := &entities.Item{
-		UserID:   request.OwnerID,
-		Category: request.Category,
-		Name:     request.Name,
-		Tag1:     request.Tag1,
-		Tag2:     request.Tag2,
-		Tag3:     request.Tag3,
-		Tag4:     request.Tag4,
-		Tag5:     request.Tag5,
-		Tag6:     request.Tag6,
-		Tag7:     request.Tag7,
-		Tag8:     request.Tag8,
-		Tag9:     request.Tag9,
-		Tag10:    request.Tag10,
-		Images:   request.Images,
-	}
-	if err = db_repository.ItemInterface.Create(ctx, item); err != nil {
-		return nil, errors.New("failed to create item for auction")
+	if auctionAgg.Auction, err = db_repository.AuctionInterface.ActiveAuction(ctx, request.OwnerID); err != nil {
+		return nil, errorhandler.InternalError
 	}
 
-	auction = &entities.Auction{
-		OwnerID:     request.OwnerID,
-		ItemID:      item.ID,
-		Title:       request.Title,
-		Description: request.Description,
-		Status:      "inactive",
-		StartPrice:  request.StartPrice,
-		MinPrice:    request.MinimalPrice,
+	if auctionAgg.Auction.Status == entities.ActiveStatus {
+		return nil, errorhandler.ErrActiveAuctionExist
 	}
-	if err = db_repository.AuctionInterface.Create(ctx, auction); err != nil {
-		return nil, err
+
+	var auctions int
+	if auctions, err = db_repository.AuctionInterface.CountInactiveAuctions(ctx, request.OwnerID); err != nil && auctions >= 5 {
+		return nil, errorhandler.ErrCreateLimit
+	}
+
+	auctionAgg.CreateItem(request.ItemTitle, request.ItemDescription)
+	if err = db_repository.ItemInterface.Create(ctx, auctionAgg.Item); err != nil {
+		return nil, errorhandler.ErrCreateItem
+	}
+
+	for _, tagName := range request.ItemTags {
+		var tag *entities.Tag
+		tag, err = db_repository.TagsInterface.ByName(ctx, tagName)
+		if err != nil {
+			if tag, err = db_repository.TagsInterface.Create(ctx, tagName); err != nil {
+				return nil, errorhandler.ErrCreateTag
+			}
+		}
+
+		if _, err = db_repository.TagsInterface.CreateLink(ctx, auctionAgg.Item.ID, tag.ID); err != nil {
+			return nil, errorhandler.ErrCreateTag
+		}
+	}
+
+	for _, filename := range request.ItemFiles {
+		if _, err = db_repository.FilesInterface.CreateLink(ctx, auctionAgg.Item.ID, filename); err != nil {
+			return nil, errorhandler.ErrCreateFile
+		}
+	}
+
+	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, request.Category, request.ShortDescription, request.StartDate)
+	if err = db_repository.AuctionInterface.Create(ctx, auctionAgg.Auction); err != nil {
+		return nil, errorhandler.ErrCreateAuction
 	}
 
 	context_with_depends.DBTxCommit(ctx)
-	return auction, nil
+	return auctionAgg, nil
 }
 
-func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.AuctionItem, error) {
+func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.AuctionAggregation, error) {
 	var err error
-	aItem := aggregates.NewAuctionItem()
+	auctionAgg := &aggregates.AuctionAggregation{}
 
-	if aItem.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
-		return nil, err
+	if auctionAgg.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
-	if aItem.Auction.CreatedAt.IsZero() {
-		return nil, errors.New("that auction does not exist")
+	if auctionAgg.Item, err = db_repository.ItemInterface.Item(ctx, auctionAgg.Auction.ItemID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistItem
 	}
 
-	if aItem.Item, err = db_repository.ItemInterface.Item(ctx, aItem.Auction.ItemID); err != nil {
-		return nil, err
+	if auctionAgg.ItemFiles, err = db_repository.FilesInterface.Files(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrGetFiles
 	}
 
-	return aItem, nil
+	if auctionAgg.Tags, err = db_repository.TagsInterface.Tags(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrGetTags
+	}
+
+	return auctionAgg, nil
 }
 
-func Auctions(ctx context.Context, request *auctionReq.Auctions, mdata *metadata.Metadata, where []string) (*aggregates.AuctionsItem, error) {
-	var err error
+func Auctions(ctx context.Context, request *auctionReq.Auctions) ([]*aggregates.AuctionFile, error) {
+	var (
+		auctionsWithFiles []*aggregates.AuctionFile
+		err               error
+	)
 
-	mdata.Total, err = db_repository.AuctionInterface.Count(ctx)
+	request.Metadata.Total, err = db_repository.AuctionInterface.Count(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get count with error: %s", err.Error())
 	}
 
-	if mdata.Total <= 0 {
-		mdata.CurrentPage = 0
-		mdata.PerPage = 0
-		return &aggregates.AuctionsItem{}, nil
+	if request.Metadata.Total <= 0 {
+		request.Metadata.CurrentPage = 0
+		request.Metadata.PerPage = 0
+		return auctionsWithFiles, nil
 	}
 
-	if err = services.GetLimitAndOffset(mdata); err != nil {
+	if err = services.GetLimitAndOffset(request.Metadata); err != nil {
 		return nil, err
 	}
 
-	auctions, err := db_repository.AuctionInterface.Auctions(ctx, where, request.Metadata)
+	tagsString := metadata.ConcatStrings(request.Tags, ",")
+	whereString := metadata.ConcatStrings(request.Where, " and ")
+
+	auctions, err := db_repository.AuctionInterface.Auctions(ctx, whereString, tagsString, request.GroupBy, request.Metadata)
 	if err != nil {
-		return nil, err
+		return nil, errorhandler.ErrGetAuctions
 	}
 
-	return auctions, nil
+	for _, auction := range auctions {
+		var files []*entities.File
+		auctionWithFile := &aggregates.AuctionFile{}
+
+		if files, err = db_repository.FilesInterface.Files(ctx, auction.ItemID); err != nil {
+			return nil, err
+		}
+
+		auctionWithFile.Auction = &entities.Auction{ID: auction.ID, ShortDescription: auction.ShortDescription, Status: auction.Status}
+
+		for _, file := range files {
+			auctionWithFile.Files = append(auctionWithFile.Files, file.Name)
+		}
+		auctionsWithFiles = append(auctionsWithFiles, auctionWithFile)
+	}
+
+	return auctionsWithFiles, nil
 }
 
-func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.AuctionItem, error) {
-	if err := context_with_depends.StartDBTx(ctx); err != nil {
+func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.AuctionAggregation, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
 		return nil, err
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	var err error
-	aItem := aggregates.NewAuctionItem()
+	auctionAgg := &aggregates.AuctionAggregation{}
 
-	if aItem.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
-		return nil, err
+	if auctionAgg.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
-	if aItem.Auction.CreatedAt.IsZero() {
-		return nil, errors.New("that auction does not exist")
+	if auctionAgg.Item, err = db_repository.ItemInterface.Item(ctx, auctionAgg.Auction.ItemID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistItem
 	}
 
-	if aItem.Item, err = db_repository.ItemInterface.Item(ctx, aItem.Auction.ItemID); err != nil || aItem.Item.CreatedAt.IsZero() {
-		return nil, errors.New("auction item does not exist")
+	auctionAgg.Item.Name = request.Title
+	auctionAgg.Item.Description = request.Description
+
+	if err = db_repository.ItemInterface.Update(ctx, auctionAgg.Item); err != nil {
+		return nil, errorhandler.ErrUpdateItem
 	}
 
-	aItem.Item.Tag1 = request.Tag1
-	aItem.Item.Tag2 = request.Tag2
-	aItem.Item.Tag3 = request.Tag3
-	aItem.Item.Tag4 = request.Tag4
-	aItem.Item.Tag5 = request.Tag5
-	aItem.Item.Tag6 = request.Tag6
-	aItem.Item.Tag7 = request.Tag7
-	aItem.Item.Tag8 = request.Tag8
-	aItem.Item.Tag9 = request.Tag9
-	aItem.Item.Tag10 = request.Tag10
-	aItem.Item.Images = request.Images
-	aItem.Item.Description = request.ItemDescription
-
-	if err = db_repository.ItemInterface.Update(ctx, aItem.Item); err != nil {
-		return nil, errors.New("failed to update auction item")
+	tempTags, err := db_repository.TagsInterface.Tags(ctx, auctionAgg.Item.ID)
+	if err != nil {
+		return nil, errorhandler.ErrGetTags
 	}
 
-	aItem.Auction.WinnerID = request.WinnerID
-	aItem.Auction.Title = request.Title
-	aItem.Auction.Description = request.AuctionDescription
-	aItem.Auction.StartPrice = request.StartPrice
-	aItem.Auction.MinPrice = request.MinimalPrice
-	aItem.Auction.Status = request.Status
+	tagsMap := services.CreateMapFromTags(tempTags)
+	for _, tag := range request.ItemTags {
+		if ok := tagsMap[tag]; ok {
+			delete(tagsMap, tag)
+			request.ItemTags = request.ItemTags[1:]
+		}
+	}
 
-	if err = db_repository.AuctionInterface.Update(ctx, aItem.Auction); err != nil {
-		return nil, errors.New("failed to update auction")
+	var tagEn *entities.Tag
+	for tag := range tagsMap {
+		if tagEn, err = db_repository.TagsInterface.ByName(ctx, tag); err != nil {
+			return nil, errorhandler.ErrGetTags
+		}
+
+		if err = db_repository.TagsInterface.DeleteItemTags(ctx, auctionAgg.Item.ID, tagEn.ID); err != nil {
+			return nil, errorhandler.ErrDeleteTags
+		}
+	}
+
+	for _, tagName := range request.ItemTags {
+		var tag *entities.Tag
+		tag, err = db_repository.TagsInterface.ByName(ctx, tagName)
+		if err != nil {
+			if tag, err = db_repository.TagsInterface.Create(ctx, tagName); err != nil {
+				return nil, errorhandler.ErrCreateTag
+			}
+		}
+
+		if _, err = db_repository.TagsInterface.CreateLink(ctx, auctionAgg.Item.ID, tag.ID); err != nil {
+			return nil, errorhandler.ErrCreateTag
+		}
+	}
+
+	tempFiles, err := db_repository.FilesInterface.Files(ctx, auctionAgg.Item.ID)
+	if err != nil {
+		return nil, errorhandler.ErrGetFiles
+	}
+
+	filesMap := services.CreateMapFromFiles(tempFiles)
+	for _, file := range request.ItemFiles {
+		if ok := filesMap[file]; ok {
+			delete(filesMap, file)
+			request.ItemFiles = request.ItemFiles[1:]
+		}
+	}
+
+	for file := range filesMap {
+		if err = db_repository.FilesInterface.Delete(ctx, auctionAgg.Item.ID, file); err != nil {
+			return nil, errorhandler.ErrDeleteFile
+		}
+
+		if err = os.Remove(fmt.Sprintf("./images/%s", file)); err != nil {
+			return nil, errorhandler.ErrDeleteFile
+		}
+	}
+
+	for _, filename := range request.ItemFiles {
+		if _, err = db_repository.FilesInterface.CreateLink(ctx, auctionAgg.Item.ID, filename); err != nil {
+			return nil, errorhandler.ErrCreateFile
+		}
+	}
+
+	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, request.Category, request.ShortDescription, request.StartDate)
+	if err = db_repository.AuctionInterface.Create(ctx, auctionAgg.Auction); err != nil {
+		return nil, errorhandler.ErrCreateAuction
 	}
 
 	context_with_depends.DBTxCommit(ctx)
-	return aItem, nil
+	return auctionAgg, nil
 }
 
 func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, error) {
@@ -175,11 +262,11 @@ func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, e
 	}
 
 	if auction.CreatedAt.IsZero() {
-		return nil, errors.New("that auction does not exist")
+		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
-	if err = db_repository.AuctionInterface.Start(ctx, auction); err != nil {
-		return nil, errors.New("failed to start auction")
+	if err = db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
+		return nil, errorhandler.ErrFailedStartAuction
 	}
 
 	context_with_depends.DBTxCommit(ctx)
@@ -201,7 +288,7 @@ func End(ctx context.Context, request *auctionReq.End) (*entities.Auction, error
 		return nil, errors.New("that auction does not exist")
 	}
 
-	if err = db_repository.AuctionInterface.End(ctx, auction); err != nil {
+	if err = db_repository.AuctionInterface.End(ctx, auction.ID); err != nil {
 		return nil, errors.New("failed to end auction")
 	}
 
@@ -209,29 +296,53 @@ func End(ctx context.Context, request *auctionReq.End) (*entities.Auction, error
 	return auction, nil
 }
 
-func Delete(ctx context.Context, request *auctionReq.Delete) (*entities.Auction, error) {
-	if err := context_with_depends.StartDBTx(ctx); err != nil {
+func Delete(ctx context.Context, request *auctionReq.Delete) (*aggregates.AuctionAggregation, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
 		return nil, err
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
-	if err != nil {
-		return nil, err
+	auctionAgg := &aggregates.AuctionAggregation{}
+
+	if auctionAgg.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
-	if auction.CreatedAt.IsZero() {
-		return nil, errors.New("that auction does not exist")
+	if auctionAgg.Auction.Status == entities.ActiveStatus || auctionAgg.Auction.Status == entities.CompletedStatus {
+		return nil, errorhandler.ErrDeleteByStatus
 	}
 
-	if err = db_repository.ItemInterface.Delete(ctx, auction.ItemID); err != nil {
-		return nil, errors.New("failed to delete item")
+	if err = db_repository.AuctionInterface.Delete(ctx, auctionAgg.Auction); err != nil {
+		return nil, errorhandler.ErrDeleteAuction
 	}
 
-	if err = db_repository.AuctionInterface.End(ctx, auction); err != nil {
-		return nil, errors.New("failed to end auction")
+	if auctionAgg.Item, err = db_repository.ItemInterface.Item(ctx, auctionAgg.Auction.ItemID); err != nil {
+		return nil, errorhandler.ErrDoesNotExistItem
+	}
+
+	if err = db_repository.ItemInterface.Delete(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrDeleteItem
+	}
+
+	if auctionAgg.ItemFiles, err = db_repository.FilesInterface.Files(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrGetFiles
+	}
+
+	if err = db_repository.FilesInterface.DeleteAll(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrDeleteFiles
+	}
+
+	for _, filename := range auctionAgg.ItemFiles {
+		if err = os.Remove(fmt.Sprintf("./images/%s", filename.Name)); err != nil {
+			return nil, errorhandler.ErrDeleteFile
+		}
+	}
+
+	if err = db_repository.TagsInterface.DeleteItemLinks(ctx, auctionAgg.Item.ID); err != nil {
+		return nil, errorhandler.ErrDeleteTags
 	}
 
 	context_with_depends.DBTxCommit(ctx)
-	return auction, nil
+	return auctionAgg, nil
 }
