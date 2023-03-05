@@ -10,6 +10,7 @@ create table users (
     city varchar(50) null,
     created_at timestamp not null,
     updated_at timestamp not null,
+    deleted_at timestamp not null,
     constraint email_phone_unique unique (email, phone),
     index (id),
     index (phone),

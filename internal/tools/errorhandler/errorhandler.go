@@ -81,7 +81,9 @@ var TypeErrors = map[string]*TypeError{
 		StatusCode: 127,
 		HttpCode:   fiber.StatusNotFound,
 	},
-	// Validation Error
+	// Auction Errors
+
+	// Validation Errors
 	ErrParseRequest.Error(): {
 		StatusCode: 997,
 		HttpCode:   fiber.StatusBadRequest,
@@ -94,6 +96,82 @@ var TypeErrors = map[string]*TypeError{
 	// Unknown Error
 	UnknownError.Error(): {
 		StatusCode: 999,
+		HttpCode:   fiber.StatusInternalServerError,
+	},
+	ErrActiveAuctionExist.Error(): {
+		StatusCode: 128,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreateItem.Error(): {
+		StatusCode: 129,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreateTag.Error(): {
+		StatusCode: 130,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreateFile.Error(): {
+		StatusCode: 131,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreateAuction.Error(): {
+		StatusCode: 132,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreateLimit.Error(): {
+		StatusCode: 133,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrDoesNotExistAuction.Error(): {
+		StatusCode: 134,
+		HttpCode:   fiber.StatusNotFound,
+	},
+	ErrDoesNotExistItem.Error(): {
+		StatusCode: 135,
+		HttpCode:   fiber.StatusNotFound,
+	},
+	ErrGetFiles.Error(): {
+		StatusCode: 136,
+		HttpCode:   fiber.StatusNotFound,
+	},
+	ErrGetTags.Error(): {
+		StatusCode: 137,
+		HttpCode:   fiber.StatusNotFound,
+	},
+	ErrGetAuctions.Error(): {
+		StatusCode: 138,
+		HttpCode:   fiber.StatusNotFound,
+	},
+	ErrUpdateItem.Error(): {
+		StatusCode: 139,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrDeleteTags.Error(): {
+		StatusCode: 140,
+		HttpCode:   fiber.StatusInternalServerError,
+	},
+	ErrDeleteFile.Error(): {
+		StatusCode: 141,
+		HttpCode:   fiber.StatusInternalServerError,
+	},
+	ErrFailedStartAuction.Error(): {
+		StatusCode: 142,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrDeleteByStatus.Error(): {
+		StatusCode: 143,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrDeleteAuction.Error(): {
+		StatusCode: 144,
+		HttpCode:   fiber.StatusInternalServerError,
+	},
+	ErrDeleteItem.Error(): {
+		StatusCode: 145,
+		HttpCode:   fiber.StatusInternalServerError,
+	},
+	ErrDeleteFiles.Error(): {
+		StatusCode: 146,
 		HttpCode:   fiber.StatusInternalServerError,
 	},
 }

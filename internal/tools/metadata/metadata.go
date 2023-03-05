@@ -1,14 +1,22 @@
 package metadata
 
 import (
-	"fmt"
+	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 )
 
-const perPageConst = 30
+const (
+	perPageConst = 30
+)
+
+var (
+	PerPageParams = "per_page"
+	PageParams    = "page"
+)
 
 type Metadata struct {
 	CurrentPage int
@@ -20,25 +28,24 @@ type Metadata struct {
 }
 
 func GetParams(ctx *fiber.Ctx) (*Metadata, error) {
-	var metadata Metadata
+	var metadata = &Metadata{}
 	var err error
 	args := ctx.Request().URI().QueryArgs()
 
-	metadata.CurrentPage, err = parseParam(args, "page")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get params 'page' with error: %s", err.Error())
+	// Metadata
+	if metadata.PerPage, err = parseParam(args, PerPageParams); err != nil {
+		return nil, errorhandler.ErrGettingPerPage
 	}
 
-	metadata.PerPage, err = parseParam(args, "per_page")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get params 'per_page' with error: %s", err.Error())
+	if metadata.CurrentPage, err = parseParam(args, PageParams); err != nil {
+		return nil, errorhandler.ErrGettingPage
 	}
 
 	if metadata.PerPage > perPageConst {
-		return nil, fmt.Errorf("per_page params must be less than %d", perPageConst)
+		return nil, errorhandler.ErrWrongPerPageValue
 	}
 
-	return &metadata, nil
+	return metadata, nil
 }
 
 func parseParam(args *fasthttp.Args, nameParams string) (int, error) {
@@ -50,22 +57,6 @@ func parseParam(args *fasthttp.Args, nameParams string) (int, error) {
 
 }
 
-func Filter(ctx *fiber.Ctx) ([]string, error) {
-	var where = []string{}
-
-	for i := 1; i <= 10; i++ {
-		if tag := ctx.Get(fmt.Sprintf("tag%d", i)); tag != "" {
-			where = append(where, fmt.Sprintf("tag%d", i)+"="+tag)
-		}
-	}
-
-	if isActive := ctx.Get("is_active"); isActive == "true" {
-		where = append(where, "is_active=1")
-	}
-
-	if category := ctx.Get("category"); category != "" {
-		where = append(where, fmt.Sprintf("category=%s", category))
-	}
-
-	return where, nil
+func ConcatStrings(sliceOfStrings []string, delimiter string) string {
+	return strings.Join(sliceOfStrings, delimiter)
 }

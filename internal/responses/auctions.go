@@ -1,0 +1,122 @@
+package responses
+
+import (
+	"github.com/L1LSunflower/auction/internal/domain/entities"
+	"github.com/gofiber/fiber/v2"
+	"time"
+
+	"github.com/L1LSunflower/auction/internal/domain/aggregates"
+	"github.com/L1LSunflower/auction/internal/responses/structs"
+)
+
+const dateFormat = "2006-01-02 15:04:05"
+
+func CreateAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
+	return ctx.JSON(&structs.CreateAuction{
+		Status: successStatus,
+		ID:     auction.Auction.ID,
+	})
+}
+
+func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
+	var (
+		files []string
+		tags  []string
+	)
+
+	if len(auction.ItemFiles) > 0 {
+		for _, file := range auction.ItemFiles {
+			files = append(files, file.Name)
+		}
+	}
+
+	if len(auction.Tags) > 0 {
+		for _, tag := range auction.Tags {
+			tags = append(tags, tag.Name)
+		}
+	}
+
+	return ctx.JSON(&structs.Auction{
+		ID:               auction.Auction.ID,
+		Category:         auction.Auction.Category,
+		WinnerID:         auction.Auction.WinnerID,
+		Title:            auction.Item.Name,
+		ShortDescription: auction.Auction.ShortDescription,
+		Description:      auction.Item.Description,
+		StartPrice:       auction.Auction.StartPrice,
+		MinimalPrice:     auction.Auction.MinPrice,
+		StartDate:        auction.Auction.StartedAt.Format(dateFormat),
+		EndedAt:          auction.Auction.EndedAt.Format(dateFormat),
+		Files:            files,
+		Tags:             tags,
+	})
+}
+
+func Auctions(ctx *fiber.Ctx, auctions []*aggregates.AuctionFile) error {
+	auctionsWithFiles := &structs.AuctionsWithFile{Status: successStatus}
+	if len(auctions) <= 0 {
+		return ctx.JSON(auctionsWithFiles)
+	}
+
+	for _, auction := range auctions {
+		var file string
+		if len(auction.Files) > 0 {
+			file = auction.Files[0]
+		}
+		auctionsWithFiles.Auctions = append(auctionsWithFiles.Auctions, structs.AuctionWithFile{
+			ID:               auction.Auction.ID,
+			Status:           auction.Auction.Status,
+			ShortDescription: auction.Auction.ShortDescription,
+			Files:            file,
+		})
+	}
+
+	return ctx.JSON(auctionsWithFiles)
+}
+
+func UpdateAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
+	var files []string
+	if len(auction.ItemFiles) > 0 {
+		for _, file := range auction.ItemFiles {
+			files = append(files, file.Name)
+		}
+	}
+
+	return ctx.JSON(&structs.Update{
+		Status:           successStatus,
+		ID:               auction.Auction.ID,
+		Category:         auction.Auction.Category,
+		WinnerID:         auction.Auction.WinnerID,
+		Title:            auction.Item.Name,
+		ShortDescription: auction.Auction.ShortDescription,
+		Description:      auction.Item.Description,
+		AuctionStatus:    auction.Auction.Status,
+		StartPrice:       auction.Auction.StartPrice,
+		MinimalPrice:     auction.Auction.MinPrice,
+		StartDate:        auction.Auction.StartedAt.Format(dateFormat),
+		EndedAt:          auction.Auction.EndedAt.Format(dateFormat),
+		Files:            files,
+	})
+}
+
+func StartAuction(ctx *fiber.Ctx, auction *entities.Auction) error {
+	return ctx.JSON(&structs.Start{
+		Status: successStatus,
+		Date:   time.Now().Format(dateFormat),
+	})
+}
+
+func EndAuction(ctx *fiber.Ctx, auction *entities.Auction) error {
+	return ctx.JSON(&structs.End{
+		Status:   successStatus,
+		Date:     time.Now().Format(dateFormat),
+		WinnerID: auction.WinnerID,
+	})
+}
+
+func DeleteAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
+	return ctx.JSON(&structs.Delete{
+		Status: successStatus,
+		Date:   time.Now().Format(dateFormat),
+	})
+}

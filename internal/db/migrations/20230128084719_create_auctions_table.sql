@@ -1,12 +1,12 @@
 -- +goose Up
 -- +goose StatementBegin
-create table auction.auction (
+create table auctions (
     id bigint primary key auto_increment not null,
+    category varchar(100) not null,
     owner_id varchar(36) not null,
     winner_id varchar(36) null,
     item_id bigint not null,
-    title varchar(255) not null,
-    description text not null,
+    short_description text null,
     start_price float null,
     minimal_price float not null,
     status varchar(10) not null,
@@ -20,7 +20,6 @@ create table auction.auction (
     constraint foreign key (item_id) references items(id),
     index (owner_id),
     index (item_id),
-    index (title),
     index (minimal_price),
     index (created_at),
     index (created_at, minimal_price),
@@ -31,5 +30,5 @@ create table auction.auction (
 
 -- +goose Down
 -- +goose StatementBegin
-drop table auction.auction cascade;
+drop table auctions cascade;
 -- +goose StatementEnd

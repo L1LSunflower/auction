@@ -39,7 +39,7 @@ func Attempts() fiber.Handler {
 
 		requestId := uid.String()
 
-		beforeAttempt(ctx, request, cleanHeaders(&ctx.Request().Header), requestId)
+		beforeAttempt(ctx, request, ctx.Request().Header.String(), requestId)
 
 		err = ctx.Next()
 

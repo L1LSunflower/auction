@@ -1,10 +1,13 @@
 package auctions
 
 import (
+	"fmt"
 	"github.com/L1LSunflower/auction/internal/requests"
 	"github.com/L1LSunflower/auction/internal/responses"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
+	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 
 	requestAuction "github.com/L1LSunflower/auction/internal/requests/structs/auctions"
 )
@@ -32,6 +35,48 @@ func Auction(ctx *fiber.Ctx) error {
 }
 
 func Auctions(ctx *fiber.Ctx) error {
+	var err error
+	request := &requestAuction.Auctions{}
+
+	if request.Metadata, err = metadata.GetParams(ctx); err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	// Group by
+	price := ctx.Get("price")
+	if price == "high to low" {
+		request.GroupBy = "price asc"
+	} else if price == "low to high" {
+		request.GroupBy = "price desc"
+	}
+
+	if price != "" {
+		date := ctx.Get("date")
+		if date == "newer" {
+			request.GroupBy = "created_at desc"
+		} else if date == "older" {
+			request.GroupBy = "created_at asc"
+		}
+	}
+
+	// Where
+	if category := ctx.Get("category"); category != "" {
+		request.Where = append(request.Where, fmt.Sprintf("category=%s", category))
+	}
+
+	if status := ctx.Get("status"); status != "" {
+		request.Where = append(request.Where, fmt.Sprintf("status=%s", status))
+	}
+
+	if tags := ctx.Get("tags"); tags != "" {
+		if strings.Index(tags, "") >= 0 {
+			request.Tags = strings.Split(tags[1:len(tags)-1-1], ",")
+		} else {
+			request.Tags = append(request.Tags, tags[1:len(tags)-1-1])
+		}
+	}
+
+	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
 }

@@ -22,7 +22,8 @@ func UploadFile(ctx *fiber.Ctx) error {
 	}
 
 	name := strings.Replace(uniqueId.String(), "-", "", -1)
-	fileExt := strings.Split(file.Filename, ".")[1]
+	splFile := strings.Split(file.Filename, ".")
+	fileExt := splFile[len(splFile)-1]
 	filename := fmt.Sprintf("%s.%s", name, fileExt)
 
 	if err = ctx.SaveFile(file, fmt.Sprintf("./static/%s", filename)); err != nil {
@@ -30,7 +31,8 @@ func UploadFile(ctx *fiber.Ctx) error {
 	}
 
 	data := map[string]interface{}{
-		"file_name": filename,
+		"content_type": file.Header.Get("Content-Type"),
+		"file_name":    filename,
 	}
 
 	return ctx.JSON(fiber.Map{"status": 201, "message": "Image uploaded successfully", "data": data})

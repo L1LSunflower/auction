@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/L1LSunflower/auction/config"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
-	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"github.com/L1LSunflower/auction/pkg/db"
 	"github.com/L1LSunflower/auction/pkg/redisdb"
 	"github.com/gofiber/fiber/v2"
@@ -24,13 +23,18 @@ func Create(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
 	auction, err := auctionService.Create(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.CreateAuction(ctx, auction)
 }
 
 func Auction(ctx *fiber.Ctx) error {
@@ -41,13 +45,18 @@ func Auction(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
 	auction, err := auctionService.Auction(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.Auction(ctx, auction)
 }
 
 func Auctions(ctx *fiber.Ctx) error {
@@ -56,23 +65,20 @@ func Auctions(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	mdata, err := metadata.GetParams(ctx)
-	if err != nil {
-		return responses.NewFailedResponse(ctx, err)
-	}
-
-	where, _ := metadata.Filter(ctx)
-
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
-	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
 
-	auctions, err := auctionService.Auctions(contxt, request, mdata, where)
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	auctions, err := auctionService.Auctions(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auctions)
+	return responses.Auctions(ctx, auctions)
 }
 
 func Update(ctx *fiber.Ctx) error {
@@ -83,13 +89,18 @@ func Update(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
 	auction, err := auctionService.Update(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.UpdateAuction(ctx, auction)
 }
 
 func Start(ctx *fiber.Ctx) error {
@@ -103,7 +114,7 @@ func Start(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.StartAuction(ctx, auction)
 }
 
 func End(ctx *fiber.Ctx) error {
@@ -114,13 +125,18 @@ func End(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
 	auction, err := auctionService.End(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.EndAuction(ctx, auction)
 }
 
 func Delete(ctx *fiber.Ctx) error {
@@ -131,11 +147,16 @@ func Delete(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
 	auction, err := auctionService.Delete(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.NewSuccessResponse(ctx, auction)
+	return responses.DeleteAuction(ctx, auction)
 }

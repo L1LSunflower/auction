@@ -13,7 +13,7 @@ import (
 
 func Auth() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		id := ctx.Params("id")
+		id := ctx.Get("id")
 		at := ctx.Get("access")
 
 		redisConn := redisdb.RedisInstance().RedisClient
@@ -24,6 +24,10 @@ func Auth() fiber.Handler {
 
 		tokens, err := redis_repository.UserInterface.Tokens(contxt, id)
 		if err != nil && err != redis.Nil {
+			return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
+		}
+
+		if tokens == nil {
 			return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
 		}
 

@@ -23,24 +23,13 @@ func (r *Repository) Create(ctx context.Context, item *entities.Item) error {
 	fields := []string{
 		"user_id",
 		"name",
-		"tag1",
-		"tag2",
-		"tag3",
-		"tag4",
-		"tag5",
-		"tag6",
-		"tag7",
-		"tag8",
-		"tag9",
-		"tag10",
-		"files",
 		"description",
 		"created_at",
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("insert into items (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now()) returnin id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(query).Scan(&item.ID, &item.CreatedAt, &item.UpdatedAt); err != nil {
+	query := fmt.Sprintf("insert into items (%s) values (?, ?, ?,  now(), now()) returning id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
+	if err = tx.QueryRow(query, item.UserID, item.Name, item.Description).Scan(&item.ID, &item.CreatedAt, &item.UpdatedAt); err != nil {
 		return err
 	}
 
@@ -58,14 +47,13 @@ func (r *Repository) Item(ctx context.Context, id int) (*entities.Item, error) {
 		"id",
 		"user_id",
 		"name",
-		"files",
 		"description",
 		"created_at",
 		"updated_at",
 	}
 
 	query := fmt.Sprintf("select %s from items where id=? and deleted_at is null", strings.Join(fields, fieldsSeparator))
-	if err = db.QueryRow(query, id).Scan(&item.ID, &item.UserID, &item.Name, &item.Images, &item.Description, &item.CreatedAt, &item.UpdatedAt); err != nil {
+	if err = db.QueryRow(query, id).Scan(&item.ID, &item.UserID, &item.Name, &item.Description, &item.CreatedAt, &item.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -80,17 +68,6 @@ func (r *Repository) Update(ctx context.Context, item *entities.Item) error {
 
 	fields := []string{
 		"name=?",
-		"tag1=?",
-		"tag2=?",
-		"tag3=?",
-		"tag4=?",
-		"tag5=?",
-		"tag6=?",
-		"tag7=?",
-		"tag8=?",
-		"tag9=?",
-		"tag10=?",
-		"files=?",
 		"description=?",
 		"updated_at=now()",
 	}
@@ -99,17 +76,6 @@ func (r *Repository) Update(ctx context.Context, item *entities.Item) error {
 	if _, err = tx.Exec(
 		query,
 		item.Name,
-		item.Tag1,
-		item.Tag2,
-		item.Tag3,
-		item.Tag4,
-		item.Tag5,
-		item.Tag6,
-		item.Tag7,
-		item.Tag8,
-		item.Tag9,
-		item.Tag10,
-		item.Images,
 		item.Description,
 	); err != nil {
 		return err
