@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	auctionHandler "github.com/L1LSunflower/auction/internal/handlers/auction"
-	balanceHandler "github.com/L1LSunflower/auction/internal/handlers/balance"
+	balanceHandler "github.com/L1LSunflower/auction/internal/handlers/balances"
 	"github.com/L1LSunflower/auction/internal/handlers/fileuploader"
 	usersHandler "github.com/L1LSunflower/auction/internal/handlers/users"
 	"github.com/L1LSunflower/auction/internal/middlewares"
