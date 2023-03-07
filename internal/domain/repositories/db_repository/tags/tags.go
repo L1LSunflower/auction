@@ -16,9 +16,16 @@ func (r *Repository) Create(ctx context.Context, tagName string) (*entities.Tag,
 	}
 
 	tag := &entities.Tag{Name: tagName}
-	if err = tx.QueryRow("insert into tags (name) values (?) returning id", tag.Name).Scan(&tag.ID); err != nil {
+	tg, err := tx.Exec("insert into tags (name) values (?)", tag.Name)
+	if err != nil {
 		return nil, err
 	}
+
+	id, err := tg.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	tag.ID = int(id)
 
 	return tag, nil
 }

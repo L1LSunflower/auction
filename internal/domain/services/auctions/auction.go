@@ -8,6 +8,7 @@ import (
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/domain/repositories/db_repository"
 	"github.com/L1LSunflower/auction/internal/domain/services"
+	"github.com/L1LSunflower/auction/internal/requests"
 	auctionReq "github.com/L1LSunflower/auction/internal/requests/structs/auctions"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
@@ -82,6 +83,10 @@ func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.Auctio
 func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.AuctionAggregation, error) {
 	var err error
 	auctionAgg := &aggregates.AuctionAggregation{}
+
+	if auctionAgg.User, err = db_repository.UserInterface.User(ctx, request.UserID); err != nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
 
 	if auctionAgg.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
 		return nil, errorhandler.ErrDoesNotExistAuction
@@ -159,6 +164,10 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 
 	auctionAgg := &aggregates.AuctionAggregation{}
 
+	if auctionAgg.User, err = db_repository.UserInterface.User(ctx, requests.UserIDCtx); err != nil {
+		return nil, err
+	}
+
 	if auctionAgg.Auction, err = db_repository.AuctionInterface.Auction(ctx, request.ID); err != nil {
 		return nil, errorhandler.ErrDoesNotExistAuction
 	}
@@ -230,7 +239,7 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 			return nil, errorhandler.ErrDeleteFile
 		}
 
-		if err = os.Remove(fmt.Sprintf("./images/%s", file)); err != nil {
+		if err = os.Remove(fmt.Sprintf("./static/%s", file)); err != nil {
 			return nil, errorhandler.ErrDeleteFile
 		}
 	}
@@ -242,7 +251,7 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 	}
 
 	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, request.Category, request.ShortDescription, request.StartDate)
-	if err = db_repository.AuctionInterface.Create(ctx, auctionAgg.Auction); err != nil {
+	if err = db_repository.AuctionInterface.Update(ctx, auctionAgg.Auction); err != nil {
 		return nil, errorhandler.ErrCreateAuction
 	}
 

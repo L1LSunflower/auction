@@ -7,6 +7,7 @@ import (
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"strings"
+	"time"
 )
 
 const fieldsSeparator = ","
@@ -26,11 +27,10 @@ func (r *Repository) Create(ctx context.Context, userID string) (*entities.Balan
 		"updated_at",
 	}
 
-	accBalance := &entities.Balance{ID: userID, Balance: 0}
-	query := fmt.Sprintf("insert into balance (%s) values (?, ?, now(), now()) returning created_at, updated_at", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(query,
-		accBalance.ID,
-		accBalance.Balance).Scan(&accBalance.CreatedAt, &accBalance.UpdatedAt); err != nil {
+	now := time.Now()
+	accBalance := &entities.Balance{ID: userID, Balance: 0, CreatedAt: now, UpdatedAt: now}
+	query := fmt.Sprintf("insert into balance (%s) values (?, ?, ?, ?)", strings.Join(fields, fieldsSeparator))
+	if _, err = tx.Exec(query, accBalance.ID, accBalance.Balance, accBalance.CreatedAt, accBalance.UpdatedAt); err != nil {
 		return nil, err
 	}
 

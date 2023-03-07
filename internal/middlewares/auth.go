@@ -2,13 +2,16 @@ package middlewares
 
 import (
 	"context"
+	"github.com/L1LSunflower/auction/internal/requests"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/L1LSunflower/auction/internal/domain/repositories/redis_repository"
 	"github.com/L1LSunflower/auction/internal/responses"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"github.com/L1LSunflower/auction/pkg/redisdb"
-	"github.com/go-redis/redis/v8"
-	"github.com/gofiber/fiber/v2"
 )
 
 func Auth() fiber.Handler {
@@ -35,6 +38,7 @@ func Auth() fiber.Handler {
 			return responses.NewSuccessResponse(ctx, errorhandler.AuthRequired)
 		}
 
+		ctx.Locals(requests.UserIDCtx, id)
 		return ctx.Next()
 
 	}

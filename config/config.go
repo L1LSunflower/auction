@@ -28,6 +28,7 @@ type Redis struct {
 	Address  string
 	Port     string
 	Password string
+	Username string
 }
 
 type LogConfig struct {
@@ -64,6 +65,7 @@ func GetConfig() *Config {
 					Address:  getValue("REDIS_ADDRESS", "redis"),
 					Port:     getValue("REDIS_PORT", "6379"),
 					Password: getValue("REDIS_PASSWORD", ""),
+					Username: getValue("REDIS_USERNAME", ""),
 				},
 				Log: &LogConfig{
 					Level:  getValue("LOG_LEVEL", message.InfoLevel),

@@ -19,7 +19,8 @@ type Create struct {
 }
 
 type Auction struct {
-	ID int
+	ID     int
+	UserID string
 }
 
 type Auctions struct {
@@ -38,8 +39,8 @@ type Update struct {
 	MinimalPrice     float64   `json:"minimal_price"`
 	StartDate        time.Time `json:"start_date"`
 	Category         string    `json:"category"`
-	ItemFiles        []string  `json:"images"`
-	ItemTags         []string  `json:"item_tags"`
+	ItemFiles        []string  `json:"files"`
+	ItemTags         []string  `json:"tags"`
 }
 
 type Start struct {
