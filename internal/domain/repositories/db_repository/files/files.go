@@ -16,9 +16,16 @@ func (r *Repository) Create(ctx context.Context, filename string) (*entities.Fil
 	}
 
 	file := &entities.File{Name: filename}
-	if err = tx.QueryRow("insert into item_images (filename) values (?) returning item_id", file.Name).Scan(&file.ID); err != nil {
+	tag, err := tx.Exec("insert into item_images (filename) values (?)", file.Name);
+	if err != nil {
 		return nil, err
 	}
+
+	id, err := tag.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	file.ID = int(id)
 
 	return file, nil
 }

@@ -8,6 +8,7 @@ type CreateAuction struct {
 type Auction struct {
 	Status           string   `json:"status"`
 	ID               int      `json:"id,required"`
+	Phone            string   `json:"phone"`
 	Category         string   `json:"category,required"`
 	WinnerID         string   `json:"winner_id,omitempty"`
 	Title            string   `json:"title,required"`

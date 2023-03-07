@@ -23,13 +23,20 @@ func Create(ctx *fiber.Ctx) error {
 }
 
 func Auction(ctx *fiber.Ctx) error {
-	var err error
+	var (
+		err error
+		ok  bool
+	)
 	request := &requestAuction.Auction{}
 
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 	ctx.Locals(requests.RequestKey, request)
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrUserNotExist)
+	}
 
 	return ctx.Next()
 }
@@ -92,6 +99,8 @@ func Update(ctx *fiber.Ctx) error {
 	if err = ctx.BodyParser(request); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
+
+	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
 }

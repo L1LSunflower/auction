@@ -26,6 +26,9 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		return err
 	}
 
+	now := time.Now()
+	auction.CreatedAt = now
+	auction.UpdatedAt = now
 	fields := []string{
 		"category",
 		"owner_id",
@@ -39,8 +42,8 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("insert into auctions (%s) values (?, ?, ?, ?, ?, ?, ?, ?, now(), now()) returning id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(
+	query := fmt.Sprintf("insert into auctions (%s) values (?, ?, ?, ?, ?, ?, ?, ?, now(), now())", strings.Join(fields, fieldsSeparator))
+	tag, err := tx.Exec(
 		query,
 		auction.Category,
 		auction.OwnerID,
@@ -50,9 +53,16 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		auction.MinPrice,
 		auction.Status,
 		auction.StartedAt,
-	).Scan(&auction.ID, &auction.CreatedAt, &auction.UpdatedAt); err != nil {
+	)
+	if err != nil {
 		return err
 	}
+
+	id, err := tag.LastInsertId()
+	if err != nil {
+		return err
+	}
+	auction.ID = int(id)
 
 	return nil
 }
@@ -329,7 +339,7 @@ func (r *Repository) ActiveAuction(ctx context.Context, ownerID string) (*entiti
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("select %s from auctions where owner_id=? and status=? and deleted_at is null group by created_at desc limit 1", strings.Join(fields, fieldsSeparator))
+	query := fmt.Sprintf("select %s from auctions where owner_id=? and status=? and deleted_at is null group by created_at limit 1", strings.Join(fields, fieldsSeparator))
 	rows, err := db.Query(query, ownerID, entities.ActiveStatus)
 	if err != nil {
 		return nil, err

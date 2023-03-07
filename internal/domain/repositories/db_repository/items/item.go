@@ -6,6 +6,7 @@ import (
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"strings"
+	"time"
 )
 
 const (
@@ -28,10 +29,20 @@ func (r *Repository) Create(ctx context.Context, item *entities.Item) error {
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("insert into items (%s) values (?, ?, ?,  now(), now()) returning id, created_at, updated_at", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(query, item.UserID, item.Name, item.Description).Scan(&item.ID, &item.CreatedAt, &item.UpdatedAt); err != nil {
+	now := time.Now()
+	item.CreatedAt = now
+	item.UpdatedAt = now
+	query := fmt.Sprintf("insert into items (%s) values (?, ?, ?, ?, ?)", strings.Join(fields, fieldsSeparator))
+	tag, err := tx.Exec(query, item.UserID, item.Name, item.Description, item.CreatedAt, item.UpdatedAt)
+	if err != nil {
 		return err
 	}
+
+	id, err := tag.LastInsertId()
+	if err != nil {
+		return err
+	}
+	item.ID = int(id)
 
 	return nil
 }
@@ -77,6 +88,7 @@ func (r *Repository) Update(ctx context.Context, item *entities.Item) error {
 		query,
 		item.Name,
 		item.Description,
+		item.ID,
 	); err != nil {
 		return err
 	}

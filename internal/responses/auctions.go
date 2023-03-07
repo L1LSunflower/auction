@@ -37,7 +37,9 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 	}
 
 	return ctx.JSON(&structs.Auction{
+		Status:           successStatus,
 		ID:               auction.Auction.ID,
+		Phone:            auction.User.Phone,
 		Category:         auction.Auction.Category,
 		WinnerID:         auction.Auction.WinnerID,
 		Title:            auction.Item.Name,
