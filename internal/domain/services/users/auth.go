@@ -29,12 +29,12 @@ func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, e
 		return nil, errorhandler.ErrNeedConfirm
 	}
 
-	user, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone)
-	if err != nil {
-		return nil, errorhandler.ErrFindByPhone
-	}
+	user, _ = db_repository.UserInterface.UserByPhone(ctx, request.Phone)
+	//if err != nil {
+	//	return nil, errorhandler.ErrFindByPhone
+	//}
 
-	if !user.CreatedAt.IsZero() {
+	if user != nil {
 		return nil, errorhandler.ErrUserExist
 	}
 
