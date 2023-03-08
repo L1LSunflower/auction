@@ -3,7 +3,7 @@ package balances
 type Credit struct {
 	ID     string
 	Pan    string  `json:"pan"`
-	CVC    string  `json:"cvc"`
+	CVV    string  `json:"cvv"`
 	Amount float64 `json:"amount"`
 }
 

@@ -144,10 +144,14 @@ func (r *Repository) Auctions(ctx context.Context, where, tags, groupBy string, 
 	}
 
 	query = fmt.Sprintf(`select %s from auctions a`, strings.Join(fields, fieldsSeparator))
-	if len(where) > 0 {
+	if len(tags) > 0 {
 		query += fmt.Sprintf(" join item_tags it on a.item_id = it.item_id join tags t on it.tag_id = t.id where t.name in (%s) and deleted_at is null", tags)
 	} else {
 		query += " where deleted_at is null"
+	}
+
+	if len(where) > 0 {
+		query += fmt.Sprintf(" and %s", where)
 	}
 
 	if len(groupBy) > 0 {
@@ -185,7 +189,6 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 	}
 
 	fields := []string{
-		"winner_id=?",
 		"start_price=?",
 		"minimal_price=?",
 		"status=?",
@@ -195,7 +198,6 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 	query := fmt.Sprintf("update auctions set %s where id=?", strings.Join(fields, fieldsSeparator))
 	if _, err = tx.Exec(
 		query,
-		auction.WinnerID,
 		auction.StartPrice,
 		auction.MinPrice,
 		auction.Status,

@@ -44,8 +44,15 @@ var (
 	ErrDeleteAuction       = errors.New("failed to delete auction")
 	ErrDeleteItem          = errors.New("failed to delete item")
 	ErrDeleteFiles         = errors.New("failed to delete item files")
+	ErrUpdateActiveAuction = errors.New("can't update auction while active")
 	// Error for Balances
-	NotEnoughBalance = errors.New("not enough balance")
+	ErrCreateBalance     = errors.New("failed to create user balance")
+	NotEnoughBalance     = errors.New("not enough balance")
+	ErrProcessCard       = errors.New("failed to process card")
+	ErrCreditBalance     = errors.New("failed to credit balance")
+	ErrDebitBalance      = errors.New("failed to debit amount from balance")
+	ErrGetBalance        = errors.New("failed to get users balance")
+	ErrCreateTransaction = errors.New("failed to create transaction")
 	// Error for metadata
 	ErrGettingPerPage    = errors.New("failed to get per page param")
 	ErrGettingPage       = errors.New("failed to get page param")

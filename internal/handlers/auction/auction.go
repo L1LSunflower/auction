@@ -78,7 +78,7 @@ func Auctions(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, err)
 	}
 
-	return responses.Auctions(ctx, auctions)
+	return responses.Auctions(ctx, auctions, request.Metadata)
 }
 
 func Update(ctx *fiber.Ctx) error {

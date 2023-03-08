@@ -82,7 +82,31 @@ var TypeErrors = map[string]*TypeError{
 		HttpCode:   fiber.StatusNotFound,
 	},
 	// Auction Errors
-
+	ErrUpdateActiveAuction.Error(): {
+		StatusCode: 129,
+		HttpCode:   fiber.StatusUnavailableForLegalReasons,
+	},
+	// Balance Errors
+	ErrCreateBalance.Error(): {
+		StatusCode: 128,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrProcessCard.Error(): {
+		StatusCode: 201,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrCreditBalance.Error(): {
+		StatusCode: 202,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrDebitBalance.Error(): {
+		StatusCode: 203,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
+	ErrGetBalance.Error(): {
+		StatusCode: 204,
+		HttpCode:   fiber.StatusUnprocessableEntity,
+	},
 	// Validation Errors
 	ErrParseRequest.Error(): {
 		StatusCode: 997,

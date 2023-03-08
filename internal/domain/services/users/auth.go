@@ -100,6 +100,10 @@ func Confirm(ctx context.Context, request *userRequest.Confirm) (*aggregates.Use
 		return nil, errorhandler.ErrStoreUser
 	}
 
+	if _, err = db_repository.BalanceInterface.Create(ctx, userToken.User.ID); err != nil {
+		return nil, errorhandler.ErrCreateBalance
+	}
+
 	userToken.Token = services.GenerateToken()
 	if err = redis_repository.UserInterface.StoreToken(ctx, userToken.User.ID, userToken.Token); err != nil {
 		return nil, errorhandler.ErrStoreToken

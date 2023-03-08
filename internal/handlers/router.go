@@ -42,7 +42,7 @@ func SetRoutes(app *fiber.App) {
 	balance := v1.Group("/balance")
 	balance.Post("/credit", middlewares.Auth(), balanceValidator.Credit, balanceHandler.Credit)
 	balance.Post("/debit", middlewares.Auth(), balanceValidator.Debit, balanceHandler.Debit)
-	balance.Get("/", middlewares.Auth(), balanceValidator.Balance, balanceHandler.Balance)
+	balance.Get("/get_balance", middlewares.Auth(), balanceValidator.Balance, balanceHandler.Balance)
 
 	// File uploader
 	app.Static("/static", "./static")

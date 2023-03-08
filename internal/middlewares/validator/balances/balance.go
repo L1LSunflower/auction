@@ -19,6 +19,8 @@ func Credit(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
+	ctx.Locals(requests.RequestKey, request)
+
 	return ctx.Next()
 }
 
@@ -33,6 +35,9 @@ func Debit(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(request); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
+
+	ctx.Locals(requests.RequestKey, request)
+
 	return ctx.Next()
 }
 
@@ -40,9 +45,11 @@ func Balance(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &balances.Balance{}
 
-	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); ok {
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
-	
+
+	ctx.Locals(requests.RequestKey, request)
+
 	return ctx.Next()
 }

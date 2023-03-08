@@ -68,18 +68,18 @@ func Auctions(ctx *fiber.Ctx) error {
 
 	// Where
 	if category := ctx.Get("category"); category != "" {
-		request.Where = append(request.Where, fmt.Sprintf("category=%s", category))
+		request.Where = append(request.Where, fmt.Sprintf("category='%s'", category))
 	}
 
 	if status := ctx.Get("status"); status != "" {
-		request.Where = append(request.Where, fmt.Sprintf("status=%s", status))
+		request.Where = append(request.Where, fmt.Sprintf("status='%s'", status))
 	}
 
 	if tags := ctx.Get("tags"); tags != "" {
 		if strings.Index(tags, "") >= 0 {
 			request.Tags = strings.Split(tags[1:len(tags)-1-1], ",")
 		} else {
-			request.Tags = append(request.Tags, tags[1:len(tags)-1-1])
+			request.Tags = append(request.Tags, fmt.Sprintf("'%s'", tags[1:len(tags)-1-1]))
 		}
 	}
 

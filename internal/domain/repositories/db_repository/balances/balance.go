@@ -65,20 +65,19 @@ func (r *Repository) Credit(ctx context.Context, userID string, amount float64) 
 		return nil, err
 	}
 
-	if _, err = tx.Exec("update balance set balance = balance + ? where id=?", userID, amount); err != nil {
+	if _, err = tx.Exec("update balance set balance = balance + ?, updated_at=now() where id=?", amount, userID); err != nil {
 		return nil, err
 	}
 
 	fields := []string{
 		"id",
 		"balance",
-		"created_at",
 		"updated_at",
 	}
 
 	accBalance := &entities.Balance{}
 	query := fmt.Sprintf("select %s from balance where id=?", strings.Join(fields, fieldsSeparator))
-	if err = tx.QueryRow(query, userID).Scan(&accBalance.ID, &accBalance.Balance, &accBalance.CreatedAt, &accBalance.UpdatedAt); err != nil {
+	if err = tx.QueryRow(query, userID).Scan(&accBalance.ID, &accBalance.Balance, &accBalance.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +107,7 @@ func (r *Repository) Debit(ctx context.Context, userID string, amount float64) (
 		return nil, errorhandler.NotEnoughBalance
 	}
 
-	if _, err = tx.Exec("update balance set balance = balance - ? where id=?", userID, amount); err != nil {
+	if _, err = tx.Exec("update balance set balance = balance - ?, updated_at=now() where id=?", amount, userID); err != nil {
 		return nil, err
 	}
 

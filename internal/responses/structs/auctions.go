@@ -23,8 +23,11 @@ type Auction struct {
 }
 
 type AuctionsWithFile struct {
-	Status   string            `json:"status,required"`
-	Auctions []AuctionWithFile `json:"auctions,required"`
+	Status      string            `json:"status,required"`
+	CurrentPage int               `json:"current_page"`
+	Total       int               `json:"total"`
+	LastPage    int               `json:"last_page"`
+	Auctions    []AuctionWithFile `json:"auctions,required"`
 }
 
 type AuctionWithFile struct {

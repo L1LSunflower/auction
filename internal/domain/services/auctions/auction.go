@@ -172,6 +172,10 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
+	if auctionAgg.Auction.Status == entities.ActiveStatus {
+		return nil, errorhandler.ErrUpdateActiveAuction
+	}
+
 	if auctionAgg.Item, err = db_repository.ItemInterface.Item(ctx, auctionAgg.Auction.ItemID); err != nil {
 		return nil, errorhandler.ErrDoesNotExistItem
 	}

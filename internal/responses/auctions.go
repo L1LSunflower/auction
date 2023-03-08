@@ -2,7 +2,9 @@ package responses
 
 import (
 	"github.com/L1LSunflower/auction/internal/domain/entities"
+	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 	"time"
 
 	"github.com/L1LSunflower/auction/internal/domain/aggregates"
@@ -54,17 +56,14 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 	})
 }
 
-func Auctions(ctx *fiber.Ctx, auctions []*aggregates.AuctionFile) error {
-	auctionsWithFiles := &structs.AuctionsWithFile{Status: successStatus}
+func Auctions(ctx *fiber.Ctx, auctions []*aggregates.AuctionFile, metadata *metadata.Metadata) error {
+	auctionsWithFiles := &structs.AuctionsWithFile{Status: successStatus, CurrentPage: metadata.CurrentPage, Total: metadata.Total, LastPage: metadata.LastPage}
 	if len(auctions) <= 0 {
 		return ctx.JSON(auctionsWithFiles)
 	}
 
 	for _, auction := range auctions {
-		var file string
-		if len(auction.Files) > 0 {
-			file = auction.Files[0]
-		}
+		file := GetFirstVideoOrImage(auction.Files)
 		auctionsWithFiles.Auctions = append(auctionsWithFiles.Auctions, structs.AuctionWithFile{
 			ID:               auction.Auction.ID,
 			Status:           auction.Auction.Status,
@@ -121,4 +120,18 @@ func DeleteAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error
 		Status: successStatus,
 		Date:   time.Now().Format(dateFormat),
 	})
+}
+
+func GetFirstVideoOrImage(files []string) string {
+	if len(files) <= 0 {
+		return ""
+	}
+
+	for _, file := range files {
+		if splitedFile := strings.Split(file, "."); len(splitedFile) > 1 && splitedFile[len(splitedFile)-1] == "mp4" {
+			return file
+		}
+	}
+
+	return files[0]
 }
