@@ -25,13 +25,13 @@ func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.Auctio
 
 	auctionAgg := &aggregates.AuctionAggregation{}
 
-	if auctionAgg.User, err = db_repository.UserInterface.User(ctx, request.OwnerID); err != nil {
-		return nil, errorhandler.InternalError
-	}
-
-	if auctionAgg.User.CreatedAt.IsZero() {
+	if auctionAgg.User, _ = db_repository.UserInterface.User(ctx, request.OwnerID); auctionAgg.User == nil {
 		return nil, errorhandler.ErrUserNotExist
 	}
+
+	//if auctionAgg.User.CreatedAt.IsZero() {
+	//	return nil, errorhandler.ErrUserNotExist
+	//}
 
 	if auctionAgg.Auction, err = db_repository.AuctionInterface.ActiveAuction(ctx, request.OwnerID); err != nil {
 		return nil, errorhandler.InternalError
@@ -269,16 +269,16 @@ func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, e
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
-	if err != nil {
-		return nil, err
+	auction, _ := db_repository.AuctionInterface.Auction(ctx, request.ID)
+	if auction == nil {
+		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	if auction.CreatedAt.IsZero() {
-		return nil, errorhandler.ErrDoesNotExistAuction
-	}
+	//if auction.CreatedAt.IsZero() {
+	//	return nil, errorhandler.ErrDoesNotExistAuction
+	//}
 
-	if err = db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
+	if err := db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
 		return nil, errorhandler.ErrFailedStartAuction
 	}
 
@@ -292,16 +292,16 @@ func End(ctx context.Context, request *auctionReq.End) (*entities.Auction, error
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
-	if err != nil {
-		return nil, err
+	auction, _ := db_repository.AuctionInterface.Auction(ctx, request.ID)
+	if auction == nil {
+		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	if auction.CreatedAt.IsZero() {
-		return nil, errors.New("that auction does not exist")
-	}
+	//if auction.CreatedAt.IsZero() {
+	//	return nil, errors.New("that auction does not exist")
+	//}
 
-	if err = db_repository.AuctionInterface.End(ctx, auction.ID); err != nil {
+	if err := db_repository.AuctionInterface.End(ctx, auction.ID); err != nil {
 		return nil, errors.New("failed to end auction")
 	}
 

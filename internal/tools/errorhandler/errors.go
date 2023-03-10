@@ -45,6 +45,7 @@ var (
 	ErrDeleteItem          = errors.New("failed to delete item")
 	ErrDeleteFiles         = errors.New("failed to delete item files")
 	ErrUpdateActiveAuction = errors.New("can't update auction while active")
+	ErrAuctionNotExist     = errors.New("failed to get auction")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")
 	NotEnoughBalance     = errors.New("not enough balance")

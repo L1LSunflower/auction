@@ -14,9 +14,7 @@ create table users (
     constraint email_phone_unique unique (email, phone),
     index (id),
     index (phone),
-    index (email),
-    index (id, created_at),
-    index (email, created_at)
+    index (email)
 );
 -- +goose StatementEnd
 

@@ -86,6 +86,10 @@ var TypeErrors = map[string]*TypeError{
 		StatusCode: 129,
 		HttpCode:   fiber.StatusUnavailableForLegalReasons,
 	},
+	ErrAuctionNotExist.Error(): {
+		StatusCode: 130,
+		HttpCode:   fiber.StatusNotFound,
+	},
 	// Balance Errors
 	ErrCreateBalance.Error(): {
 		StatusCode: 128,

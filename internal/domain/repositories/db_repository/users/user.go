@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
@@ -97,16 +98,18 @@ func (r *Repository) UserByPhone(ctx context.Context, phone string) (*entities.U
 		"updated_at",
 	}
 
-	query := fmt.Sprintf("select %s from users where phone=?", strings.Join(fields, fieldsSeparator))
+	query := fmt.Sprintf("select %s from users where phone=? and deleted_at is null", strings.Join(fields, fieldsSeparator))
 	rows, err := db.Query(query, phone)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		if err = rows.Scan(&user.ID, &user.Phone, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.City, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		city := sql.NullString{}
+		if err = rows.Scan(&user.ID, &user.Phone, &user.Email, &user.Password, &user.FirstName, &user.LastName, &city, &user.CreatedAt, &user.UpdatedAt); err != nil {
 			return nil, err
 		}
+		user.City = city.String
 	}
 
 	return user, nil

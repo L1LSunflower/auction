@@ -47,7 +47,7 @@ func redisConnect() (*RedisConnection, error) {
 		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Address, cfg.Redis.Port),
 		Username: cfg.Redis.Username,
 		Password: cfg.Redis.Password,
-		DB:       0,
+		DB:       1,
 		TLSConfig: &tls.Config{
 			MinVersion: tls.VersionTLS12,
 			ServerName: cfg.Redis.Address,

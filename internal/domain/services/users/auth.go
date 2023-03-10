@@ -29,12 +29,12 @@ func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, e
 		return nil, errorhandler.ErrNeedConfirm
 	}
 
-	user, _ = db_repository.UserInterface.UserByPhone(ctx, request.Phone)
-	//if err != nil {
-	//	return nil, errorhandler.ErrFindByPhone
-	//}
+	user, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone)
+	if err != nil {
+		return nil, errorhandler.ErrFindByPhone
+	}
 
-	if user != nil {
+	if !user.CreatedAt.IsZero() {
 		return nil, errorhandler.ErrUserExist
 	}
 
@@ -88,7 +88,7 @@ func Confirm(ctx context.Context, request *userRequest.Confirm) (*aggregates.Use
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil || !userToken.User.CreatedAt.IsZero() {
+	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); userToken.User == nil {
 		return nil, errorhandler.ErrConfirm
 	}
 
@@ -120,12 +120,8 @@ func SignIn(ctx context.Context, request *userRequest.SignIn) (*aggregates.UserT
 		err       error
 	)
 
-	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil {
+	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil && userToken.User == nil {
 		return nil, errorhandler.ErrFindByPhone
-	}
-
-	if userToken.User.CreatedAt.IsZero() {
-		return nil, errorhandler.ErrUserNotExist
 	}
 
 	if request.Password != userToken.User.Password {
@@ -159,21 +155,21 @@ func RefreshToken(ctx context.Context, request *userRequest.Tokens) (*entities.T
 }
 
 func SendRestoreCode(ctx context.Context, request *userRequest.RestorePassword) error {
-	user, err := db_repository.UserInterface.UserByPhone(ctx, request.Phone)
-	if err != nil {
+	user, _ := db_repository.UserInterface.UserByPhone(ctx, request.Phone)
+	if user == nil {
 		return errorhandler.ErrUserExist
 	}
 
-	if user.CreatedAt.IsZero() {
-		return errorhandler.ErrUserNotExist
-	}
+	//if user.CreatedAt.IsZero() {
+	//	return errorhandler.ErrUserNotExist
+	//}
 
 	code := services.GenerateRandomCode()
 	//if err := sms.SendSMS(request.Phone, code); err != nil {
 	//	return err
 	//}
 
-	if err = redis_repository.UserInterface.StoreUserCode(ctx, user.Phone, code); err != nil {
+	if err := redis_repository.UserInterface.StoreUserCode(ctx, user.Phone, code); err != nil {
 		return errorhandler.ErrStoreOtp
 	}
 

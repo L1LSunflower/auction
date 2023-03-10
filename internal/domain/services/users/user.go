@@ -11,14 +11,14 @@ import (
 )
 
 func User(ctx context.Context, request *userRequest.User) (*entities.User, error) {
-	user, err := db_repository.UserInterface.User(ctx, request.ID)
-	if err != nil {
+	user, _ := db_repository.UserInterface.User(ctx, request.ID)
+	if user == nil {
 		return nil, errorhandler.ErrUserExist
 	}
 
-	if user.CreatedAt.IsZero() {
-		return nil, errorhandler.ErrUserExist
-	}
+	//if user.CreatedAt.IsZero() {
+	//	return nil, errorhandler.ErrUserExist
+	//}
 
 	return user, nil
 }

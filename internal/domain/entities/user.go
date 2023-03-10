@@ -9,7 +9,7 @@ type User struct {
 	Password  string    `db:"password,required"`
 	FirstName string    `db:"first_name,required"`
 	LastName  string    `db:"last_name,required"`
-	City      string    `db:"cities,omitempty"`
-	CreatedAt time.Time `db:"created_at,required"`
+	City      string    `db:"city,omitempty"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 }
