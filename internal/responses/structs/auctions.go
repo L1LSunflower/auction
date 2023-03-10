@@ -35,6 +35,7 @@ type AuctionWithFile struct {
 	ID               int    `json:"id,required"`
 	ShortDescription string `json:"short_description,required"`
 	Files            string `json:"media,required"`
+	Category         string `json:"category"`
 }
 
 type Update struct {

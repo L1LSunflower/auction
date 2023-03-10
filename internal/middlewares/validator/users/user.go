@@ -75,10 +75,15 @@ func RestoreValidator(ctx *fiber.Ctx) error {
 func RefreshValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.Tokens{}
 
-	request.AccessToken = ctx.Get("access")
-	request.RefreshToken = ctx.Get("refresh")
+	if request.AccessToken = ctx.Get("access"); request.AccessToken == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
+	}
 
-	if request.ID = ctx.Params("id"); request.ID == "" {
+	if request.RefreshToken = ctx.Get("refresh"); request.RefreshToken == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
+	}
+
+	if request.ID = ctx.Get("id"); request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 

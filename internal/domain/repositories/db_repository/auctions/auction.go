@@ -140,7 +140,7 @@ func (r *Repository) Auctions(ctx context.Context, where, tags, groupBy string, 
 		"a.status",
 		"a.short_description",
 		"a.item_id",
-		//"if.names",
+		"a.category",
 	}
 
 	query = fmt.Sprintf(`select %s from auctions a`, strings.Join(fields, fieldsSeparator))
@@ -172,6 +172,7 @@ func (r *Repository) Auctions(ctx context.Context, where, tags, groupBy string, 
 			&auction.Status,
 			&shortDescription,
 			&auction.ItemID,
+			&auction.Category,
 		); err != nil {
 			return nil, err
 		}

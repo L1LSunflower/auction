@@ -144,7 +144,7 @@ func Auctions(ctx context.Context, request *auctionReq.Auctions) ([]*aggregates.
 			return nil, err
 		}
 
-		auctionWithFile.Auction = &entities.Auction{ID: auction.ID, ShortDescription: auction.ShortDescription, Status: auction.Status}
+		auctionWithFile.Auction = &entities.Auction{ID: auction.ID, ShortDescription: auction.ShortDescription, Status: auction.Status, Category: auction.Category}
 
 		for _, file := range files {
 			auctionWithFile.Files = append(auctionWithFile.Files, file.Name)

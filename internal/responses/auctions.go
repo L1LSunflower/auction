@@ -68,6 +68,7 @@ func Auctions(ctx *fiber.Ctx, auctions []*aggregates.AuctionFile, metadata *meta
 			ID:               auction.Auction.ID,
 			Status:           auction.Auction.Status,
 			ShortDescription: auction.Auction.ShortDescription,
+			Category:         auction.Auction.Category,
 			Files:            file,
 		})
 	}

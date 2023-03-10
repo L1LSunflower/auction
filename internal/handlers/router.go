@@ -28,7 +28,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/confirm/:id", usersValidator.ConfirmValidator, usersHandler.Confirm)
 	v1.Post("/restore_password", usersValidator.RestoreValidator, usersHandler.Restore)
 	v1.Put("/restore_password", usersValidator.ChangePasswordValidator, usersHandler.ChangePassword)
-	v1.Post("/refresh_token/:id", middlewares.Auth(), usersValidator.RefreshValidator, usersHandler.Refresh)
+	v1.Post("/refresh_token", middlewares.Auth(), usersValidator.RefreshValidator, usersHandler.Refresh)
 	v1.Get("/user/:id", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
 
 	// Auction
