@@ -2,6 +2,7 @@ package tags
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
@@ -108,4 +109,28 @@ func (r *Repository) DeleteItemLinks(ctx context.Context, itemID int) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) TagsByPattern(ctx context.Context, pattern string) ([]*entities.Tag, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var tags []*entities.Tag
+	query := fmt.Sprintf("select id, name from tags where name like '%s%s%s'", "%", pattern, "%")
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		tag := &entities.Tag{}
+		if err = rows.Scan(&tag.ID, &tag.Name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
 }

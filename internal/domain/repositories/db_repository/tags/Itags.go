@@ -13,6 +13,7 @@ type TagsInterface interface {
 	Tags(ctx context.Context, itemID int) ([]*entities.Tag, error)
 	DeleteItemTags(ctx context.Context, itemID, tagID int) error
 	DeleteItemLinks(ctx context.Context, itemID int) error
+	TagsByPattern(ctx context.Context, pattern string) ([]*entities.Tag, error)
 }
 
 func GetTagsInterface() TagsInterface {

@@ -6,10 +6,12 @@ import (
 	auctionHandler "github.com/L1LSunflower/auction/internal/handlers/auction"
 	balanceHandler "github.com/L1LSunflower/auction/internal/handlers/balances"
 	"github.com/L1LSunflower/auction/internal/handlers/fileuploader"
+	tagsHandler "github.com/L1LSunflower/auction/internal/handlers/tags"
 	usersHandler "github.com/L1LSunflower/auction/internal/handlers/users"
 	"github.com/L1LSunflower/auction/internal/middlewares"
 	auctionValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/auctions"
 	balanceValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/balances"
+	tagsValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/tags"
 	usersValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/users"
 )
 
@@ -43,6 +45,10 @@ func SetRoutes(app *fiber.App) {
 	balance.Post("/credit", middlewares.Auth(), balanceValidator.Credit, balanceHandler.Credit)
 	balance.Post("/debit", middlewares.Auth(), balanceValidator.Debit, balanceHandler.Debit)
 	balance.Get("/get_balance", middlewares.Auth(), balanceValidator.Balance, balanceHandler.Balance)
+
+	// Get tags like
+	tags := v1.Group("/tags")
+	tags.Get("/tags_by_pattern", tagsValidator.ByPattern, tagsHandler.ByPattern)
 
 	// File uploader
 	app.Static("/static", "./static")

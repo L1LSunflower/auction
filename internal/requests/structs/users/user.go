@@ -16,8 +16,8 @@ type SignIn struct {
 
 type Tokens struct {
 	ID           string
-	AccessToken  string
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access"`
+	RefreshToken string `json:"refresh"`
 }
 
 type Confirm struct {
