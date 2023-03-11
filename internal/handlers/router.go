@@ -33,7 +33,7 @@ func SetRoutes(app *fiber.App) {
 	// Users routes
 	v1.Get("/profile", middlewares.Auth(), usersValidator.ProfileValidator, usersHandler.Profile)
 	v1.Get("/profile_history", middlewares.Auth(), usersValidator.ProfileValidator, usersHandler.ProfileHistory)
-	v1.Get("/user", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
+	v1.Get("/users", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
 	v1.Put("/users", middlewares.Auth(), usersValidator.UpdateValidator, usersHandler.Update)
 	v1.Delete("/users", middlewares.Auth(), usersValidator.DeleteValidator, usersHandler.Delete)
 

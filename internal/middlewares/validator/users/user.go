@@ -51,8 +51,8 @@ func ConfirmValidator(ctx *fiber.Ctx) error {
 }
 
 func GetUserValidator(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	if len(id) != uuidLength {
+	id, ok := ctx.Locals(requests.UserIDCtx).(string)
+	if !ok || len(id) != uuidLength {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
