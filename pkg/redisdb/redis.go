@@ -1,6 +1,7 @@
 package redisdb
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"sync"
@@ -46,11 +47,11 @@ func redisConnect() (*RedisConnection, error) {
 		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Address, cfg.Redis.Port),
 		Username: cfg.Redis.Username,
 		Password: cfg.Redis.Password,
-		DB:       1,
-		//TLSConfig: &tls.Config{
-		//	MinVersion: tls.VersionTLS12,
-		//	ServerName: cfg.Redis.Address,
-		//},
+		DB:       0,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			ServerName: cfg.Redis.Address,
+		},
 	})
 
 	_, err := client.Ping(client.Context()).Result()
