@@ -35,7 +35,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/kolesa-team/go-webp/utils"
+	"github.com/L1LSunflower/auction/pkg/webp/utils"
 )
 
 // Decoder stores information to decode picture

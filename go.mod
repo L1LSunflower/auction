@@ -7,7 +7,6 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gofiber/fiber/v2 v2.41.0
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/kolesa-team/go-webp v1.0.4
 	github.com/pressly/goose v2.7.0+incompatible
 	github.com/sirupsen/logrus v1.9.0
 	github.com/valyala/fasthttp v1.43.0
