@@ -2,7 +2,6 @@ package fileuploader
 
 import (
 	"fmt"
-	"github.com/kolesa-team/go-webp/webp"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -10,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/L1LSunflower/auction/pkg/webp"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid"
 )
