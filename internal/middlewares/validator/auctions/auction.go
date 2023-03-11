@@ -140,3 +140,22 @@ func Delete(ctx *fiber.Ctx) error {
 
 	return ctx.Next()
 }
+
+func Participate(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+	request := &requestAuction.Participate{}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}

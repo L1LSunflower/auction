@@ -109,7 +109,15 @@ func Start(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	auction, err := auctionService.Start(context.Background(), request)
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	auction, err := auctionService.Start(contxt, request)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, err)
 	}
@@ -159,4 +167,26 @@ func Delete(ctx *fiber.Ctx) error {
 	}
 
 	return responses.DeleteAuction(ctx, auction)
+}
+
+func Participate(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.Participate)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	auction, err := auctionService.Participate(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.Participate(ctx, auction)
 }

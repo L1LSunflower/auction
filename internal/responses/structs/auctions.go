@@ -7,6 +7,7 @@ type CreateAuction struct {
 
 type Auction struct {
 	Status           string   `json:"status"`
+	Member           bool     `json:"member"`
 	ID               int      `json:"id,required"`
 	Phone            string   `json:"phone"`
 	Category         string   `json:"category,required"`

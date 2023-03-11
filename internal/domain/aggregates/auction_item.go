@@ -11,6 +11,7 @@ type AuctionAggregation struct {
 	Item      *entities.Item
 	Tags      []*entities.Tag
 	ItemFiles []*entities.File
+	Member    bool
 }
 
 func (a *AuctionAggregation) CreateItem(name, description string) {

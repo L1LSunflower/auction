@@ -19,9 +19,15 @@ type Auction struct {
 	StartPrice       float64
 	MinPrice         float64
 	Status           string
+	Price            float64
 	StartedAt        time.Time
 	EndedAt          time.Time
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        time.Time
+}
+
+type AuctionMember struct {
+	AuctionID     int
+	ParticipantID string
 }

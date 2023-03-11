@@ -40,6 +40,7 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 
 	return ctx.JSON(&structs.Auction{
 		Status:           successStatus,
+		Member:           auction.Member,
 		ID:               auction.Auction.ID,
 		Phone:            auction.User.Phone,
 		Category:         auction.Auction.Category,
@@ -121,6 +122,10 @@ func DeleteAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error
 		Status: successStatus,
 		Date:   time.Now().Format(dateFormat),
 	})
+}
+
+func Participate(ctx *fiber.Ctx, auctionMember *entities.AuctionMember) error {
+	return ctx.JSON(fiber.Map{"status": successStatus, "date": time.Now().Format(dateFormat)})
 }
 
 func GetFirstVideoOrImage(files []string) string {

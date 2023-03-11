@@ -104,6 +104,17 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 		return nil, errorhandler.ErrGetTags
 	}
 
+	member, _ := db_repository.AuctionInterface.Member(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
+	if member == nil {
+		auctionAgg.Member = false
+	}
+
+	if auctionAgg.User.ID == member.ParticipantID {
+		auctionAgg.Member = true
+	} else {
+		auctionAgg.Member = false
+	}
+
 	return auctionAgg, nil
 }
 
@@ -269,14 +280,14 @@ func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, e
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, _ := db_repository.AuctionInterface.Auction(ctx, request.ID)
-	if auction == nil {
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
+	if err != nil || auction == nil {
 		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	//if auction.CreatedAt.IsZero() {
-	//	return nil, errorhandler.ErrDoesNotExistAuction
-	//}
+	if auction.Status != entities.InactiveStatus {
+		return nil, errorhandler.ErrFailedStartAuction
+	}
 
 	if err := db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
 		return nil, errorhandler.ErrFailedStartAuction
@@ -292,14 +303,14 @@ func End(ctx context.Context, request *auctionReq.End) (*entities.Auction, error
 	}
 	defer context_with_depends.DBTxRollback(ctx)
 
-	auction, _ := db_repository.AuctionInterface.Auction(ctx, request.ID)
-	if auction == nil {
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
+	if err != nil || auction == nil {
 		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	//if auction.CreatedAt.IsZero() {
-	//	return nil, errors.New("that auction does not exist")
-	//}
+	if auction.Status != entities.ActiveStatus {
+		return nil, errorhandler.ErrEndAuction
+	}
 
 	if err := db_repository.AuctionInterface.End(ctx, auction.ID); err != nil {
 		return nil, errors.New("failed to end auction")
@@ -358,4 +369,30 @@ func Delete(ctx context.Context, request *auctionReq.Delete) (*aggregates.Auctio
 
 	context_with_depends.DBTxCommit(ctx)
 	return auctionAgg, nil
+}
+
+func Participate(ctx context.Context, request *auctionReq.Participate) (*entities.AuctionMember, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return nil, err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction == nil {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	auctionMember, err := db_repository.AuctionInterface.CreateMember(ctx, auction.ID, user.ID)
+	if err != nil || auctionMember == nil {
+		return nil, errorhandler.ErrParticipate
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+	return auctionMember, nil
 }

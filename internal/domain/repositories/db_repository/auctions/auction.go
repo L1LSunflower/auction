@@ -77,6 +77,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 
 	winnerID := sql.NullString{}
 	shortDescription := sql.NullString{}
+	price := sql.NullFloat64{}
 	startedAt := sql.NullTime{}
 	endedAt := sql.NullTime{}
 	fields := []string{
@@ -91,6 +92,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 		"status",
 		"started_at",
 		"ended_at",
+		"price",
 		"created_at",
 		"updated_at",
 	}
@@ -109,6 +111,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 		&auction.StartPrice,
 		&auction.MinPrice,
 		&auction.Status,
+		&price,
 		&startedAt,
 		&endedAt,
 		&auction.CreatedAt,
@@ -118,6 +121,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	}
 	auction.ShortDescription = shortDescription.String
 	auction.WinnerID = winnerID.String
+	auction.Price = price.Float64
 	auction.StartedAt = startedAt.Time
 	auction.EndedAt = endedAt.Time
 
@@ -426,4 +430,17 @@ func (r *Repository) ActiveAuctions(ctx context.Context, ownerID string) ([]*ent
 	}
 
 	return auctions, nil
+}
+
+func (r *Repository) UpdatePrice(ctx context.Context, id int, price float64) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec("update auctions set price=? where id=?", price, id); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -50,6 +50,8 @@ var (
 	ErrAuctionNotExist     = errors.New("failed to get auction")
 	ErrDeleteAuctions      = errors.New("failed to delete user auctions")
 	ErrFailedToGetTags     = errors.New("failed to get tags from url params")
+	ErrEndAuction          = errors.New("failed to end auction")
+	ErrParticipate         = errors.New("failed to add participate user for auction")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")
 	NotEnoughBalance     = errors.New("not enough balance")

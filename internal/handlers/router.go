@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"github.com/gofiber/fiber/v2"
-
 	auctionHandler "github.com/L1LSunflower/auction/internal/handlers/auction"
+	"github.com/L1LSunflower/auction/internal/handlers/auction_websockets"
 	balanceHandler "github.com/L1LSunflower/auction/internal/handlers/balances"
 	"github.com/L1LSunflower/auction/internal/handlers/fileuploader"
 	tagsHandler "github.com/L1LSunflower/auction/internal/handlers/tags"
@@ -13,10 +12,23 @@ import (
 	balanceValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/balances"
 	tagsValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/tags"
 	usersValidator "github.com/L1LSunflower/auction/internal/middlewares/validator/users"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 func SetRoutes(app *fiber.App) {
 	app.Get("/__health", Healthcheck)
+
+	app.Use("/ws", func(c *fiber.Ctx) error {
+		// IsWebSocketUpgrade returns true if the client
+		// requested upgrade to the WebSocket protocol.
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	app.Post("/ws/:id", websocket.New(auction_websockets.Auction))
 
 	v1 := app.Group("/v1")
 	v1.Use(middlewares.Attempts())
@@ -45,6 +57,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Delete("/auctions/:id", middlewares.Auth(), auctionValidator.Delete, auctionHandler.Delete)
 	v1.Post("/auctions/:id/start", middlewares.Auth(), auctionValidator.Start, auctionHandler.Start)
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
+	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
 
 	// Balance routes
 	balance := v1.Group("/balance")

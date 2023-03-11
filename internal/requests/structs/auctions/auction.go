@@ -55,3 +55,8 @@ type End struct {
 type Delete struct {
 	ID int
 }
+
+type Participate struct {
+	AuctionID int
+	UserID    string
+}
