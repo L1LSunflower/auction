@@ -53,8 +53,8 @@ func SetRoutes(app *fiber.App) {
 	balance.Get("/get_balance", middlewares.Auth(), balanceValidator.Balance, balanceHandler.Balance)
 
 	// Get tags like
-	tags := v1.Group("/tags")
-	tags.Get("/:pattern", tagsValidator.ByPattern, tagsHandler.ByPattern)
+	//tags := v1.Group("/tags")
+	v1.Get("/tags", tagsValidator.ByPattern, tagsHandler.ByPattern)
 
 	// File uploader
 	app.Static("/static", "./static")

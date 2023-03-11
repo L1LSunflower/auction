@@ -49,6 +49,7 @@ var (
 	ErrUpdateActiveAuction = errors.New("can't update auction while active")
 	ErrAuctionNotExist     = errors.New("failed to get auction")
 	ErrDeleteAuctions      = errors.New("failed to delete user auctions")
+	ErrFailedToGetTags     = errors.New("failed to get tags from url params")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")
 	NotEnoughBalance     = errors.New("not enough balance")
