@@ -131,7 +131,7 @@ func Auctions(ctx context.Context, request *auctionReq.Auctions) ([]*aggregates.
 	tagsString := metadata.ConcatStrings(request.Tags, ",")
 	whereString := metadata.ConcatStrings(request.Where, " and ")
 
-	auctions, err := db_repository.AuctionInterface.Auctions(ctx, whereString, tagsString, request.GroupBy, request.Metadata)
+	auctions, err := db_repository.AuctionInterface.Auctions(ctx, whereString, tagsString, request.OrderBy, request.Metadata)
 	if err != nil {
 		return nil, errorhandler.ErrGetAuctions
 	}

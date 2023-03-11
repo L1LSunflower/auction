@@ -11,7 +11,7 @@ import (
 
 func ByPattern(ctx *fiber.Ctx) error {
 	request := &tagRequest.Tag{}
-	if err := ctx.BodyParser(request); err != nil {
+	if request.Pattern = ctx.Params("pattern"); len(request.Pattern) <= 0 {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 

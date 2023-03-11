@@ -29,6 +29,10 @@ func Credit(ctx context.Context, credit *balanceReq.Credit) (*aggregates.UserBal
 		return nil, errorhandler.ErrUserNotExist
 	}
 
+	if len(credit.Pan) <= 0 || len(credit.CVV) <= 0 {
+		return nil, errorhandler.ErrProcessCard
+	}
+
 	if legCreds[credit.Pan] != credit.CVV {
 		return nil, errorhandler.ErrProcessCard
 	}

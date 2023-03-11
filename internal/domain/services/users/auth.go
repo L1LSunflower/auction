@@ -120,7 +120,7 @@ func SignIn(ctx context.Context, request *userRequest.SignIn) (*aggregates.UserT
 		err       error
 	)
 
-	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil && userToken.User == nil {
+	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil || userToken.User == nil {
 		return nil, errorhandler.ErrFindByPhone
 	}
 
@@ -155,14 +155,10 @@ func RefreshToken(ctx context.Context, request *userRequest.Tokens) (*entities.T
 }
 
 func SendRestoreCode(ctx context.Context, request *userRequest.RestorePassword) error {
-	user, _ := db_repository.UserInterface.UserByPhone(ctx, request.Phone)
-	if user == nil {
+	user, err := db_repository.UserInterface.UserByPhone(ctx, request.Phone)
+	if err != nil || user == nil {
 		return errorhandler.ErrUserExist
 	}
-
-	//if user.CreatedAt.IsZero() {
-	//	return errorhandler.ErrUserNotExist
-	//}
 
 	code := services.GenerateRandomCode()
 	//if err := sms.SendSMS(request.Phone, code); err != nil {
@@ -185,7 +181,7 @@ func ChangePassword(ctx context.Context, request *userRequest.ChangePassword) (*
 	defer context_with_depends.DBTxRollback(ctx)
 
 	userToken := &aggregates.UserToken{}
-	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil {
+	if userToken.User, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone); err != nil || userToken.User == nil {
 		return nil, errorhandler.ErrUserNotExist
 	}
 

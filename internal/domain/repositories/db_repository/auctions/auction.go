@@ -124,7 +124,7 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	return auction, nil
 }
 
-func (r *Repository) Auctions(ctx context.Context, where, tags, groupBy string, metadata *metadata.Metadata) ([]*entities.Auction, error) {
+func (r *Repository) Auctions(ctx context.Context, where, tags, orderBy string, metadata *metadata.Metadata) ([]*entities.Auction, error) {
 	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
@@ -154,8 +154,8 @@ func (r *Repository) Auctions(ctx context.Context, where, tags, groupBy string, 
 		query += fmt.Sprintf(" and %s", where)
 	}
 
-	if len(groupBy) > 0 {
-		query += " " + groupBy
+	if len(orderBy) > 0 {
+		query += " order by " + orderBy
 	}
 	query += " limit ? offset ?"
 
@@ -253,58 +253,44 @@ func (r *Repository) Delete(ctx context.Context, auction *entities.Auction) erro
 	return nil
 }
 
-func (r *Repository) ByOwnerID(ctx context.Context, ownerID int) (*entities.Auction, error) {
+func (r *Repository) ByOwnerID(ctx context.Context, ownerID string) ([]*entities.Auction, error) {
 	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	auction := &entities.Auction{}
+	var auctions []*entities.Auction
 	fields := []string{
-		"id",
-		"owner_id",
-		"winner_id",
-		"item_id",
-		"start_price",
-		"minimal_price",
-		"status",
-		"started_at",
-		"ended_at",
-		"created_at",
-		"updated_at",
+		"a.id",
+		"a.status",
+		"a.short_description",
+		"a.item_id",
+		"a.category",
 	}
 
-	query := fmt.Sprintf("select %s from auctions where owner_id=? and deleted_at is null group by created_at desc limit 1", strings.Join(fields, fieldsSeparator))
+	query := fmt.Sprintf(`select %s from auctions a where owner_id=?`, strings.Join(fields, fieldsSeparator))
 	rows, err := db.Query(query, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		winnerID := sql.NullString{}
-		startedAt := sql.NullTime{}
-		endedAt := sql.NullTime{}
+		auction := &entities.Auction{}
+		shortDescription := sql.NullString{}
 		if err = rows.Scan(
 			&auction.ID,
-			&auction.OwnerID,
-			&winnerID,
-			&auction.ItemID,
-			&auction.StartPrice,
-			&auction.MinPrice,
 			&auction.Status,
-			&startedAt,
-			&endedAt,
-			&auction.CreatedAt,
-			&auction.UpdatedAt,
+			&shortDescription,
+			&auction.ItemID,
+			&auction.Category,
 		); err != nil {
 			return nil, err
 		}
-		auction.WinnerID = winnerID.String
-		auction.StartedAt = startedAt.Time
-		auction.EndedAt = endedAt.Time
+		auction.ShortDescription = shortDescription.String
+		auctions = append(auctions, auction)
 	}
 
-	return auction, nil
+	return auctions, nil
 }
 
 func (r *Repository) Count(ctx context.Context) (int, error) {
@@ -387,4 +373,57 @@ func (r *Repository) CountInactiveAuctions(ctx context.Context, ownerID string) 
 	}
 
 	return count, nil
+}
+
+func (r *Repository) DeleteByOwnerID(ctx context.Context, ownerID string) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec("update auctions set deleted_at=now() where owner_id=?", ownerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) ActiveAuctions(ctx context.Context, ownerID string) ([]*entities.Auction, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var auctions []*entities.Auction
+	fields := []string{
+		"a.id",
+		"a.status",
+		"a.short_description",
+		"a.item_id",
+		"a.category",
+	}
+
+	query := fmt.Sprintf(`select %s from auctions a join auction_members am on a.id=am.auction_id where am.participant_id=? and a.status=?`, strings.Join(fields, fieldsSeparator))
+	rows, err := db.Query(query, ownerID, entities.ActiveStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		auction := &entities.Auction{}
+		shortDescription := sql.NullString{}
+		if err = rows.Scan(
+			&auction.ID,
+			&auction.Status,
+			&shortDescription,
+			&auction.ItemID,
+			&auction.Category,
+		); err != nil {
+			return nil, err
+		}
+		auction.ShortDescription = shortDescription.String
+		auctions = append(auctions, auction)
+	}
+
+	return auctions, nil
 }

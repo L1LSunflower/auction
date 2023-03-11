@@ -29,7 +29,13 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/restore_password", usersValidator.RestoreValidator, usersHandler.Restore)
 	v1.Put("/restore_password", usersValidator.ChangePasswordValidator, usersHandler.ChangePassword)
 	v1.Post("/refresh_token", middlewares.Auth(), usersValidator.RefreshValidator, usersHandler.Refresh)
-	v1.Get("/user/:id", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
+
+	// Users routes
+	v1.Get("/profile", middlewares.Auth(), usersValidator.ProfileValidator, usersHandler.Profile)
+	v1.Get("/profile_history", middlewares.Auth(), usersValidator.ProfileValidator, usersHandler.ProfileHistory)
+	v1.Get("/user", middlewares.Auth(), usersValidator.GetUserValidator, usersHandler.GetUser)
+	v1.Put("/users", middlewares.Auth(), usersValidator.UpdateValidator, usersHandler.Update)
+	v1.Delete("/users", middlewares.Auth(), usersValidator.DeleteValidator, usersHandler.Delete)
 
 	// Auction
 	v1.Post("/auctions", middlewares.Auth(), auctionValidator.Create, auctionHandler.Create)
@@ -48,7 +54,7 @@ func SetRoutes(app *fiber.App) {
 
 	// Get tags like
 	tags := v1.Group("/tags")
-	tags.Get("/tags_by_pattern", tagsValidator.ByPattern, tagsHandler.ByPattern)
+	tags.Get("/:pattern", tagsValidator.ByPattern, tagsHandler.ByPattern)
 
 	// File uploader
 	app.Static("/static", "./static")

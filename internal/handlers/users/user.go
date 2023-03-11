@@ -166,3 +166,91 @@ func ChangePassword(ctx *fiber.Ctx) error {
 
 	return responses.SuccessChangePassword(ctx, tokens)
 }
+
+func Update(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.Update)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	user, err := userService.Update(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.UpdateUser(ctx, user)
+}
+
+func Delete(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.Delete)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	user, err := userService.Delete(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.DeleteUser(ctx, user)
+}
+
+func Profile(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.User)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	userProfile, err := userService.Profile(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.UserProfile(ctx, userProfile)
+}
+
+func ProfileHistory(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.User)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	userProfile, err := userService.OwnersAuctions(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.UserProfileHistory(ctx, userProfile)
+}

@@ -26,7 +26,7 @@ type Auction struct {
 type Auctions struct {
 	Where    []string
 	Tags     []string
-	GroupBy  string
+	OrderBy  string
 	Metadata *metadata.Metadata
 }
 

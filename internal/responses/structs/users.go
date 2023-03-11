@@ -30,3 +30,28 @@ type OtpSent struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
+
+type UpdateUser struct {
+	Status    string `json:"status"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	City      string `json:"city"`
+}
+
+type DeleteUser struct {
+	Status string `json:"status"`
+	ID     string `json:"id"`
+}
+
+type Profile struct {
+	Status   string            `json:"status"`
+	Balance  float64           `json:"balance"`
+	Auctions []AuctionWithFile `json:"auctions"`
+}
+
+type ProfileHistory struct {
+	Status   string            `json:"status"`
+	Auctions []AuctionWithFile `json:"auctions"`
+}

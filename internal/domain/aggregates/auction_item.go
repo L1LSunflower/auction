@@ -34,13 +34,24 @@ func (a *AuctionAggregation) CreateAuction(startPrice, minPrice float64, categor
 	}
 }
 
+type ProfileAggregation struct {
+	User     *entities.User
+	Balance  *entities.Balance
+	Auctions []*AuctionFile
+}
+
+type ProfileHistoryAggregation struct {
+	User     *entities.User
+	Auctions []*AuctionFile
+}
+
 type AuctionFile struct {
 	Auction *entities.Auction
 	Files   []string
 }
 
 type AuctionsItem struct {
-	AuctsItem []*AuctItem `json:"auctions"`
+	AuctsItem []*AuctItem
 }
 
 type AuctItem struct {

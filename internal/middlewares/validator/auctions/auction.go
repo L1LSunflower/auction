@@ -52,17 +52,17 @@ func Auctions(ctx *fiber.Ctx) error {
 	// Group by
 	price := ctx.Get("price")
 	if price == "high to low" {
-		request.GroupBy = "price asc"
+		request.OrderBy = "a.start_price asc"
 	} else if price == "low to high" {
-		request.GroupBy = "price desc"
+		request.OrderBy = "a.start_price desc"
 	}
 
-	if price != "" {
+	if price == "" {
 		date := ctx.Get("date")
 		if date == "newer" {
-			request.GroupBy = "created_at desc"
+			request.OrderBy = "a.created_at desc"
 		} else if date == "older" {
-			request.GroupBy = "created_at asc"
+			request.OrderBy = "a.created_at asc"
 		}
 	}
 

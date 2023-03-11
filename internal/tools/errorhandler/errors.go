@@ -24,6 +24,8 @@ var (
 	ErrRestore        = errors.New("failed to restore password")
 	ErrUserNotExist   = errors.New("user does not exist")
 	ErrUpdatePassword = errors.New("failed to update user password")
+	ErrUpdateUser     = errors.New("failed to update user")
+	ErrDeleteUser     = errors.New("failed to delete user")
 	// Error for Auctions
 	ErrActiveAuctionExist  = errors.New("active auction already exist")
 	ErrCreateItem          = errors.New("failed to create item")
@@ -46,6 +48,7 @@ var (
 	ErrDeleteFiles         = errors.New("failed to delete item files")
 	ErrUpdateActiveAuction = errors.New("can't update auction while active")
 	ErrAuctionNotExist     = errors.New("failed to get auction")
+	ErrDeleteAuctions      = errors.New("failed to delete user auctions")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")
 	NotEnoughBalance     = errors.New("not enough balance")

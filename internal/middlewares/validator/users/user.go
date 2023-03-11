@@ -101,3 +101,43 @@ func ChangePasswordValidator(ctx *fiber.Ctx) error {
 
 	return ctx.Next()
 }
+
+func UpdateValidator(ctx *fiber.Ctx) error {
+	var ok bool
+	request := &userRequest.Update{}
+	if err := ctx.BodyParser(request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func DeleteValidator(ctx *fiber.Ctx) error {
+	var ok bool
+	request := &userRequest.Delete{}
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func ProfileValidator(ctx *fiber.Ctx) error {
+	var ok bool
+	request := &userRequest.User{}
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
