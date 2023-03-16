@@ -38,3 +38,11 @@ func NewSuccessResponse(ctx *fiber.Ctx, data any) error {
 		Message: data,
 	})
 }
+
+func NewValidationErrResponse(ctx *fiber.Ctx, err error) error {
+	ctx.Status(fiber.StatusBadRequest)
+	return ctx.JSON(&structs.ErrorResponse{
+		StatusCode: errorhandler.ErrParseRequestCode,
+		Message:    err.Error(),
+	})
+}

@@ -10,7 +10,6 @@ import (
 	userRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
-	"github.com/L1LSunflower/auction/pkg/sms"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofrs/uuid"
 )
@@ -59,9 +58,9 @@ func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, e
 	}
 
 	code := services.GenerateRandomCode()
-	if err = sms.SendSMS(request.Phone, code); err != nil {
-		return nil, errorhandler.ErrSendOtp
-	}
+	//if err = sms.SendSMS(request.Phone, code); err != nil {
+	//	return nil, errorhandler.ErrSendOtp
+	//}
 	if err = redis_repository.UserInterface.StoreUserCode(ctx, uid.String(), code); err != nil {
 		return nil, errorhandler.ErrStoreOtp
 	}
@@ -162,9 +161,9 @@ func SendRestoreCode(ctx context.Context, request *userRequest.RestorePassword) 
 	}
 
 	code := services.GenerateRandomCode()
-	if err := sms.SendSMS(request.Phone, code); err != nil {
-		return err
-	}
+	//if err := sms.SendSMS(request.Phone, code); err != nil {
+	//	return err
+	//}
 
 	if err := redis_repository.UserInterface.StoreUserCode(ctx, user.Phone, code); err != nil {
 		return errorhandler.ErrStoreOtp

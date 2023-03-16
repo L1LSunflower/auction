@@ -46,9 +46,13 @@ type DeleteUser struct {
 }
 
 type Profile struct {
-	Status   string            `json:"status"`
-	Balance  float64           `json:"balance"`
-	Auctions []AuctionWithFile `json:"auctions"`
+	Status    string            `json:"status"`
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Phone     string            `json:"phone"`
+	Email     string            `json:"email"`
+	Balance   float64           `json:"balance"`
+	Auctions  []AuctionWithFile `json:"auctions"`
 }
 
 type ProfileHistory struct {

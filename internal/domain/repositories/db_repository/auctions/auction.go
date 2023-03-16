@@ -111,9 +111,9 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 		&auction.StartPrice,
 		&auction.MinPrice,
 		&auction.Status,
-		&price,
 		&startedAt,
 		&endedAt,
+		&price,
 		&auction.CreatedAt,
 		&auction.UpdatedAt,
 	); err != nil {

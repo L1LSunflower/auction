@@ -2,21 +2,26 @@ package auctions
 
 import (
 	"fmt"
+	"github.com/L1LSunflower/auction/internal/middlewares/validator"
 	"github.com/L1LSunflower/auction/internal/requests"
+	requestAuction "github.com/L1LSunflower/auction/internal/requests/structs/auctions"
 	"github.com/L1LSunflower/auction/internal/responses"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"github.com/gofiber/fiber/v2"
-	"strings"
-
-	requestAuction "github.com/L1LSunflower/auction/internal/requests/structs/auctions"
 )
 
 func Create(ctx *fiber.Ctx) error {
 	request := &requestAuction.Create{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
 	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -37,6 +42,12 @@ func Auction(ctx *fiber.Ctx) error {
 	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrUserNotExist)
 	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
 }
@@ -76,11 +87,17 @@ func Auctions(ctx *fiber.Ctx) error {
 	}
 
 	if tags := ctx.Get("tags"); tags != "" {
-		if strings.Index(tags, "") >= 0 {
-			request.Tags = strings.Split(tags[1:len(tags)-1-1], ",")
-		} else {
-			request.Tags = append(request.Tags, fmt.Sprintf("'%s'", tags[1:len(tags)-1-1]))
-		}
+		request.Tags = tags
+		//if strings.Index(tags, "") >= 0 {
+		//	request.Tags = strings.Split(tags, ",")
+		//}
+		//else {
+		//	request.Tags = append(request.Tags, fmt.Sprintf("'%s'", tags[1:len(tags)-1-1]))
+		//}
+	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -96,8 +113,12 @@ func Update(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	if err = ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err = requests.ParseRequest(ctx, request); err != nil {
+		return err
+	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -114,6 +135,10 @@ func Start(ctx *fiber.Ctx) error {
 	}
 	ctx.Locals(requests.RequestKey, request)
 
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	return ctx.Next()
 }
 
@@ -124,6 +149,11 @@ func End(ctx *fiber.Ctx) error {
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -136,6 +166,11 @@ func Delete(ctx *fiber.Ctx) error {
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -155,6 +190,11 @@ func Participate(ctx *fiber.Ctx) error {
 	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()

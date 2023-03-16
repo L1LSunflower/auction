@@ -84,7 +84,14 @@ func DeleteUser(ctx *fiber.Ctx, user *entities.User) error {
 }
 
 func UserProfile(ctx *fiber.Ctx, userProfile *aggregates.ProfileAggregation) error {
-	userProfileResponse := &structs.Profile{Status: successStatus, Balance: userProfile.Balance.Balance}
+	userProfileResponse := &structs.Profile{
+		Status:    successStatus,
+		Balance:   userProfile.Balance.Balance,
+		FirstName: userProfile.User.FirstName,
+		LastName:  userProfile.User.LastName,
+		Phone:     userProfile.User.Phone,
+		Email:     userProfile.User.Email,
+	}
 
 	for _, auction := range userProfile.Auctions {
 		file := GetFirstVideoOrImage(auction.Files)

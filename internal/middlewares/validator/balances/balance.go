@@ -1,6 +1,7 @@
 package balances
 
 import (
+	"github.com/L1LSunflower/auction/internal/middlewares/validator"
 	"github.com/L1LSunflower/auction/internal/requests"
 	"github.com/L1LSunflower/auction/internal/requests/structs/balances"
 	"github.com/L1LSunflower/auction/internal/responses"
@@ -19,6 +20,10 @@ func Credit(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -32,8 +37,12 @@ func Debit(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -47,6 +56,10 @@ func Balance(ctx *fiber.Ctx) error {
 
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)

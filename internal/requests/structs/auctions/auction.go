@@ -6,57 +6,57 @@ import (
 )
 
 type Create struct {
-	OwnerID          string    `json:"owner_id"`
-	ShortDescription string    `json:"short_description"`
-	StartDate        time.Time `json:"start_date"`
-	StartPrice       float64   `json:"start_price"`
-	MinimalPrice     float64   `json:"minimal_price"`
-	Category         string    `json:"category"`
-	ItemTitle        string    `json:"title"`
-	ItemDescription  string    `json:"description"`
-	ItemFiles        []string  `json:"files"`
-	ItemTags         []string  `json:"tags"`
+	OwnerID          string    `json:"owner_id" validate:"required"`
+	ShortDescription string    `json:"short_description" validate:"omitempty"`
+	StartDate        time.Time `json:"start_date" validate:"required"`
+	StartPrice       float64   `json:"start_price" validate:"required"`
+	MinimalPrice     float64   `json:"minimal_price" validate:"required"`
+	Category         string    `json:"category" validate:"required"`
+	ItemTitle        string    `json:"title" validate:"required"`
+	ItemDescription  string    `json:"description" validate:"omitempty"`
+	ItemFiles        []string  `json:"files" validate:"omitempty"`
+	ItemTags         []string  `json:"tags" validate:"omitempty"`
 }
 
 type Auction struct {
-	ID     int
-	UserID string
+	ID     int    `validate:"required"`
+	UserID string `validate:"required"`
 }
 
 type Auctions struct {
 	Where    []string
-	Tags     []string
+	Tags     string
 	OrderBy  string
 	Metadata *metadata.Metadata
 }
 
 type Update struct {
 	ID               int
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	ShortDescription string    `json:"short_description"`
-	StartPrice       float64   `json:"start_price"`
-	MinimalPrice     float64   `json:"minimal_price"`
-	StartDate        time.Time `json:"start_date"`
-	Category         string    `json:"category"`
-	ItemFiles        []string  `json:"files"`
-	ItemTags         []string  `json:"tags"`
+	Title            string    `json:"title" validate:"required"`
+	Description      string    `json:"description" validate:"required"`
+	ShortDescription string    `json:"short_description" validate:"required"`
+	StartPrice       float64   `json:"start_price" validate:"required"`
+	MinimalPrice     float64   `json:"minimal_price" validate:"required"`
+	StartDate        time.Time `json:"start_date" validate:"required"`
+	Category         string    `json:"category" validate:"required"`
+	ItemFiles        []string  `json:"files" validate:"required"`
+	ItemTags         []string  `json:"tags" validate:"required"`
 }
 
 type Start struct {
-	ID      int
-	EndedAt time.Time `json:"ended_at"`
+	ID      int       `validate:"required"`
+	EndedAt time.Time `json:"ended_at" validate:"required"`
 }
 
 type End struct {
-	ID int
+	ID int `validate:"required"`
 }
 
 type Delete struct {
-	ID int
+	ID int `validate:"required"`
 }
 
 type Participate struct {
-	AuctionID int
-	UserID    string
+	AuctionID int    `validate:"required"`
+	UserID    string `validate:"require"`
 }

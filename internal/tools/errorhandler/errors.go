@@ -3,6 +3,10 @@ package errorhandler
 import "errors"
 
 var (
+	ErrParseRequestCode = 997
+)
+
+var (
 	// Error for Users
 	ErrBearerAuth     = errors.New("authorization required")
 	ErrStoreUser      = errors.New("failed to store user")

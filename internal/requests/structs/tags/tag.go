@@ -1,5 +1,5 @@
 package tags
 
 type Tag struct {
-	Pattern string `json:"pattern"`
+	Pattern string `validate:"required"`
 }

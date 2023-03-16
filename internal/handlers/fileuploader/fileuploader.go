@@ -63,7 +63,17 @@ func UploadFile(ctx *fiber.Ctx) error {
 	case "png":
 		img, err = png.Decode(file)
 	default:
-		return ctx.JSON(fiber.Map{"status": "error", "message": "non-extendable file type", "data": nil})
+		if err = ctx.SaveFile(fileRequest, fmt.Sprintf("%s/%s", "static", filename)); err != nil {
+			return ctx.JSON(fiber.Map{"status": 500, "message": "Server error", "data": nil})
+		}
+
+		data := map[string]interface{}{
+			"content_type": fileRequest.Header.Get("Content-Type"),
+			"file_name":    filename,
+		}
+
+		return ctx.JSON(fiber.Map{"status": 201, "message": "video uploaded successfully", "data": data})
+
 	}
 	if err != nil {
 		return ctx.JSON(fiber.Map{"status": "error", "message": "Server error", "data": nil})

@@ -113,7 +113,7 @@ var TypeErrors = map[string]*TypeError{
 	},
 	// Validation Errors
 	ErrParseRequest.Error(): {
-		StatusCode: 997,
+		StatusCode: ErrParseRequestCode,
 		HttpCode:   fiber.StatusBadRequest,
 	},
 	// Internal Errors

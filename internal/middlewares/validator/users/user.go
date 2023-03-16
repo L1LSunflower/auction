@@ -1,6 +1,7 @@
 package users
 
 import (
+	"github.com/L1LSunflower/auction/internal/middlewares/validator"
 	"github.com/L1LSunflower/auction/internal/requests"
 	userRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
 	"github.com/L1LSunflower/auction/internal/responses"
@@ -14,8 +15,12 @@ const (
 
 func SignUpValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.SignUp{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -25,8 +30,12 @@ func SignUpValidator(ctx *fiber.Ctx) error {
 
 func SignInValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.SignIn{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -36,13 +45,17 @@ func SignInValidator(ctx *fiber.Ctx) error {
 
 func ConfirmValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.Confirm{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
 	}
 
 	request.ID = ctx.Params("id")
 	if len(request.ID) != uuidLength {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -57,6 +70,11 @@ func GetUserValidator(ctx *fiber.Ctx) error {
 	}
 
 	request := &userRequest.User{ID: id}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -64,11 +82,16 @@ func GetUserValidator(ctx *fiber.Ctx) error {
 
 func RestoreValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.RestorePassword{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
+
 	return ctx.Next()
 }
 
@@ -87,14 +110,22 @@ func RefreshValidator(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 	return ctx.Next()
 }
 
 func ChangePasswordValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.ChangePassword{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -105,12 +136,16 @@ func ChangePasswordValidator(ctx *fiber.Ctx) error {
 func UpdateValidator(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &userRequest.Update{}
-	if err := ctx.BodyParser(request); err != nil {
-		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	if err := requests.ParseRequest(ctx, request); err != nil {
+		return err
 	}
 
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)
@@ -125,6 +160,10 @@ func DeleteValidator(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
 	ctx.Locals(requests.RequestKey, request)
 
 	return ctx.Next()
@@ -135,6 +174,10 @@ func ProfileValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.User{}
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
 	}
 
 	ctx.Locals(requests.RequestKey, request)

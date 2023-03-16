@@ -1,59 +1,54 @@
 package users
 
 type SignUp struct {
-	Phone     string `json:"phone,required"`
-	FirstName string `json:"first_name,required"`
-	LastName  string `json:"last_name,required"`
-	Email     string `json:"email,required"`
-	Password  string `json:"password,required"`
-	City      string `json:"city,omitempty"`
+	Phone     string `json:"phone" validate:"required,e164"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required"`
+	City      string `json:"city" validate:"omitempty"`
 }
 
 type SignIn struct {
-	Phone    string `json:"phone,required"`
-	Password string `json:"password,required"`
+	Phone    string `json:"phone" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type Tokens struct {
-	ID           string
-	AccessToken  string `json:"access"`
-	RefreshToken string `json:"refresh"`
+	ID           string `validate:"required"`
+	AccessToken  string `json:"access" validate:"required"`
+	RefreshToken string `json:"refresh" validate:"required"`
 }
 
 type Confirm struct {
-	ID    string
-	Phone string `json:"phone"`
-	Code  string `json:"code"`
+	ID    string `validate:"required"`
+	Phone string `json:"phone" validate:"required,e164"`
+	Code  string `json:"code" validate:"required,len=4"`
 }
 
 type User struct {
-	ID string
+	ID string `validate:"required"`
 }
 
 type Update struct {
-	ID        string
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Phone     string `json:"phone"`
-	Password  string `json:"password"`
+	ID        string `validate:"required"`
+	Email     string `json:"email" validate:"omitempty,email"`
+	FirstName string `json:"first_name" validate:"omitempty"`
+	LastName  string `json:"last_name" validate:"omitempty"`
+	Phone     string `json:"phone" validate:"omitempty,phone"`
+	Password  string `json:"password" validate:"omitempty"`
 }
 
 type Delete struct {
-	ID string
+	ID string `validate:"required"`
 }
 
 type RestorePassword struct {
-	Phone string `json:"phone,required"`
-}
-
-type RefreshPassword struct {
-	AccessToken  string
-	RefreshToken string
+	Phone string `json:"phone" validate:"required,phone"`
 }
 
 type ChangePassword struct {
-	Phone    string `json:"phone"`
-	Code     string `json:"code"`
-	Password string `json:"password"`
+	Phone    string `json:"phone" validate:"required,phone"`
+	Code     string `json:"code" validate:"required,len=4"`
+	Password string `json:"password" validate:"required"`
 }
