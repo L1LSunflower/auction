@@ -9,6 +9,7 @@ type Auction struct {
 	Status           string   `json:"status"`
 	Member           bool     `json:"member"`
 	ID               int      `json:"id,required"`
+	AuctionStatus    string   `json:"auction_status"`
 	Phone            string   `json:"phone"`
 	Category         string   `json:"category,required"`
 	WinnerID         string   `json:"winner_id,omitempty"`
@@ -34,6 +35,7 @@ type AuctionsWithFile struct {
 type AuctionWithFile struct {
 	Status           string `json:"status,required"`
 	ID               int    `json:"id,required"`
+	AuctionStatus    string `json:"auction_status"`
 	ShortDescription string `json:"short_description,required"`
 	Files            string `json:"media,required"`
 	Category         string `json:"category"`

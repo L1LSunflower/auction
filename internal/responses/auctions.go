@@ -42,6 +42,7 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 		Status:           successStatus,
 		Member:           auction.Member,
 		ID:               auction.Auction.ID,
+		AuctionStatus:    auction.Auction.Status,
 		Phone:            auction.OwnerUser.Phone,
 		Category:         auction.Auction.Category,
 		WinnerID:         auction.Auction.WinnerID,
@@ -68,6 +69,7 @@ func Auctions(ctx *fiber.Ctx, auctions []*aggregates.AuctionFile, metadata *meta
 		auctionsWithFiles.Auctions = append(auctionsWithFiles.Auctions, structs.AuctionWithFile{
 			ID:               auction.Auction.ID,
 			Status:           auction.Auction.Status,
+			AuctionStatus:    auction.Auction.Status,
 			ShortDescription: auction.Auction.ShortDescription,
 			Category:         auction.Auction.Category,
 			Files:            file,
