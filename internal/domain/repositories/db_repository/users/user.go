@@ -125,7 +125,6 @@ func (r *Repository) Update(ctx context.Context, user *entities.User) error {
 		"first_name=?",
 		"last_name=?",
 		"email=?",
-		"phone=?",
 		"password=?",
 		"updated_at=now()",
 	}
@@ -135,7 +134,7 @@ func (r *Repository) Update(ctx context.Context, user *entities.User) error {
 		return err
 	}
 
-	if err = tx.QueryRow("select updated_at from users where id=?", user.ID).Scan(&user.UpdatedAt); err != nil {
+	if err = tx.QueryRow("select updated_at from users where id=?", user.FirstName, user.LastName, user.Email, user.Password, user.ID).Scan(&user.UpdatedAt); err != nil {
 		return err
 	}
 

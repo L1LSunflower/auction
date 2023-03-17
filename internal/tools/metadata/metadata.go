@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"fmt"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"strconv"
 	"strings"
@@ -33,11 +34,11 @@ func GetParams(ctx *fiber.Ctx) (*Metadata, error) {
 	args := ctx.Request().URI().QueryArgs()
 
 	// Metadata
-	if metadata.PerPage, err = parseParam(args, PerPageParams); err != nil {
+	if metadata.PerPage, err = ParseParamInt(args, PerPageParams); err != nil {
 		return nil, errorhandler.ErrGettingPerPage
 	}
 
-	if metadata.CurrentPage, err = parseParam(args, PageParams); err != nil {
+	if metadata.CurrentPage, err = ParseParamInt(args, PageParams); err != nil {
 		return nil, errorhandler.ErrGettingPage
 	}
 
@@ -48,13 +49,32 @@ func GetParams(ctx *fiber.Ctx) (*Metadata, error) {
 	return metadata, nil
 }
 
-func parseParam(args *fasthttp.Args, nameParams string) (int, error) {
+func PrepareTags(tags string) string {
+	tags = strings.ReplaceAll(tags, "_", " ")
+	tagsSlice := strings.Split(tags, ",")
+	tags = ""
+	for iTag, tag := range tagsSlice {
+		if iTag == len(tagsSlice)-1 {
+			tags += fmt.Sprintf("'%s'", tag)
+		} else {
+			tags += fmt.Sprintf("'%s',", tag)
+		}
+	}
+
+	return tags
+}
+
+func ParseParamInt(args *fasthttp.Args, nameParams string) (int, error) {
 	v, err := strconv.Atoi(string(args.Peek(nameParams)))
 	if err != nil {
 		return 0, err
 	}
 	return v, nil
 
+}
+
+func ParseParams(args *fasthttp.Args, nameParams string) string {
+	return string(args.Peek(nameParams))
 }
 
 func ConcatStrings(sliceOfStrings []string, delimiter string) string {

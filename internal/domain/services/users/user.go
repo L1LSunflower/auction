@@ -31,11 +31,10 @@ func Update(ctx context.Context, request *userRequest.Update) (*entities.User, e
 	}
 
 	user = &entities.User{
-		ID:        request.ID,
+		ID:        user.ID,
 		Email:     request.Email,
 		FirstName: request.FirstName,
 		LastName:  request.LastName,
-		Phone:     request.Phone,
 		Password:  request.Password,
 	}
 

@@ -35,7 +35,7 @@ func UploadFile(ctx *fiber.Ctx) error {
 	fileExt := splFile[len(splFile)-1]
 	filename := fmt.Sprintf("%s.%s", name, fileExt)
 
-	if fileExt == "mp4" {
+	if fileExt == "mp4" || fileExt == "MOV" || fileExt == "mov" {
 		if err = ctx.SaveFile(fileRequest, fmt.Sprintf("%s/%s", "static", filename)); err != nil {
 			return ctx.JSON(fiber.Map{"status": 500, "message": "Server error", "data": nil})
 		}

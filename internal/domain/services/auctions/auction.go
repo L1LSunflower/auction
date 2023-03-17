@@ -104,8 +104,8 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 		return nil, errorhandler.ErrGetTags
 	}
 
-	member, _ := db_repository.AuctionInterface.Member(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
-	if member == nil {
+	member, err := db_repository.AuctionInterface.Member(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
+	if err != nil && member == nil {
 		auctionAgg.Member = false
 	}
 

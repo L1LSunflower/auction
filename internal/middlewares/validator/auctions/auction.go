@@ -86,14 +86,9 @@ func Auctions(ctx *fiber.Ctx) error {
 		request.Where = append(request.Where, fmt.Sprintf("status='%s'", status))
 	}
 
-	if tags := ctx.Get("tags"); tags != "" {
-		request.Tags = tags
-		//if strings.Index(tags, "") >= 0 {
-		//	request.Tags = strings.Split(tags, ",")
-		//}
-		//else {
-		//	request.Tags = append(request.Tags, fmt.Sprintf("'%s'", tags[1:len(tags)-1-1]))
-		//}
+	tags := metadata.ParseParams(ctx.Request().URI().QueryArgs(), "tags")
+	if len(tags) > 0 {
+		request.Tags = metadata.PrepareTags(tags)
 	}
 
 	if err = validator.ValidateRequest(request); err != nil {

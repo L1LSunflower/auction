@@ -35,7 +35,6 @@ type Update struct {
 	Email     string `json:"email" validate:"omitempty,email"`
 	FirstName string `json:"first_name" validate:"omitempty"`
 	LastName  string `json:"last_name" validate:"omitempty"`
-	Phone     string `json:"phone" validate:"omitempty,phone"`
 	Password  string `json:"password" validate:"omitempty"`
 }
 
