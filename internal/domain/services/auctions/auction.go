@@ -262,8 +262,12 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 			return nil, errorhandler.ErrCreateFile
 		}
 	}
+	
+	auctionAgg.Auction.StartPrice = request.StartPrice
+	auctionAgg.Auction.MinPrice = request.MinimalPrice
+	auctionAgg.Auction.ShortDescription = request.ShortDescription
+	auctionAgg.Auction.StartedAt = request.StartDate
 
-	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, auctionAgg.Auction.Category, request.ShortDescription, request.StartDate)
 	if err = db_repository.AuctionInterface.Update(ctx, auctionAgg.Auction); err != nil {
 		return nil, errorhandler.ErrCreateAuction
 	}

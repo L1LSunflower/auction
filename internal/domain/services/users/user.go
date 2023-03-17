@@ -46,7 +46,7 @@ func Update(ctx context.Context, request *userRequest.Update) (*entities.User, e
 		user.Password = request.Password
 	}
 
-	if err := db_repository.UserInterface.Update(ctx, user); err != nil {
+	if err = db_repository.UserInterface.Update(ctx, user); err != nil {
 		return nil, errorhandler.ErrUpdateUser
 	}
 

@@ -31,7 +31,7 @@ type Auctions struct {
 }
 
 type Update struct {
-	ID               int
+	ID               int       `validate:"required"`
 	Title            string    `json:"title" validate:"required"`
 	Description      string    `json:"description" validate:"required"`
 	ShortDescription string    `json:"short_description" validate:"required"`

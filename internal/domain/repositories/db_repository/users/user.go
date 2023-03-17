@@ -130,11 +130,11 @@ func (r *Repository) Update(ctx context.Context, user *entities.User) error {
 	}
 
 	query := fmt.Sprintf("update users set %s where id=?", strings.Join(fields, fieldsSeparator))
-	if _, err = tx.Exec(query, user.ID); err != nil {
+	if _, err = tx.Exec(query, user.FirstName, user.LastName, user.Email, user.Password, user.ID); err != nil {
 		return err
 	}
 
-	if err = tx.QueryRow("select updated_at from users where id=?", user.FirstName, user.LastName, user.Email, user.Password, user.ID).Scan(&user.UpdatedAt); err != nil {
+	if err = tx.QueryRow("select updated_at from users where id=?", user.ID).Scan(&user.UpdatedAt); err != nil {
 		return err
 	}
 
