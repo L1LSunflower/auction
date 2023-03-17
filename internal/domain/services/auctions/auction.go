@@ -105,7 +105,7 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 	}
 
 	member, err := db_repository.AuctionInterface.Member(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
-	if err != nil && member == nil {
+	if err != nil || member == nil {
 		auctionAgg.Member = false
 	}
 
@@ -262,7 +262,7 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 			return nil, errorhandler.ErrCreateFile
 		}
 	}
-	
+
 	auctionAgg.Auction.StartPrice = request.StartPrice
 	auctionAgg.Auction.MinPrice = request.MinimalPrice
 	auctionAgg.Auction.ShortDescription = request.ShortDescription
