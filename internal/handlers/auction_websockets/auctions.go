@@ -18,88 +18,85 @@ import (
 )
 
 func Auction(c *websocket.Conn) {
-	//defer c.Close()
 
-	for {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
 
-		id, err := strconv.Atoi(c.Params("id"))
-		if err != nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	ctx, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	context_with_depends.StartDBTx(ctx)
+	defer context_with_depends.DBTxRollback(ctx)
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, id)
+	if err != nil || auction == nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	if auction.Status != entities.ActiveStatus {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	auctionOffer := &auctionReq.AmountOffer{ID: "0186bfd7-bafa-73d3-ad20-ee9dc729e49d", Amount: 15003}
+	if err = c.ReadJSON(auctionOffer); err != nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to parser request"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	member, err := db_repository.AuctionInterface.Member(ctx, auction.ID, auctionOffer.ID)
+	if err != nil || member == nil || len(member.ParticipantID) <= 0 {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	if auctionOffer.Amount <= auction.Price {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "your amount lower than that"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	if err = db_repository.AuctionInterface.UpdatePrice(ctx, auction.ID, auctionOffer.Amount); err != nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to set price for some reason"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		return
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	if err = c.WriteJSON(fiber.Map{"status": "success", "price": auctionOffer.Amount}); err != nil {
+		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to set price for some reason"}); err != nil {
+			log.Println("ERROR: failed to get auction with that id")
+		}
+		if err = c.Close(); err != nil {
+			log.Println("ERROR: failed to close ws channel")
 		}
 
-		dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
-		redisConn := redisdb.RedisInstance().RedisClient
-
-		ctx, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
-		if err != nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		auction, err := db_repository.AuctionInterface.Auction(ctx, id)
-		if err != nil || auction == nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		if auction.Status != entities.ActiveStatus {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		auctionOffer := &auctionReq.AmountOffer{}
-		if err = c.ReadJSON(auctionOffer); err != nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to parser request"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		member, err := db_repository.AuctionInterface.Member(ctx, auction.ID, auctionOffer.ID)
-		if err != nil || member == nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		if auctionOffer.Amount < auction.Price {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "your amount lower than that"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		if err = db_repository.AuctionInterface.UpdatePrice(ctx, auction.ID, auctionOffer.Amount); err != nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to set price for some reason"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
-
-		if err = c.WriteJSON(fiber.Map{"status": "success", "price": auctionOffer.Amount}); err != nil {
-			if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to set price for some reason"}); err != nil {
-				log.Println("ERROR: failed to get auction with that id")
-				return
-				//break
-			}
-		}
+		log.Println(12)
+		return
 	}
 }

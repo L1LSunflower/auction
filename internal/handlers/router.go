@@ -23,17 +23,6 @@ func SetRoutes(app *fiber.App) {
 	v1.Use(middlewares.Attempts())
 	v1.Use(middlewares.BearerAuth())
 
-	v1.Use("/ws", func(c *fiber.Ctx) error {
-		// IsWebSocketUpgrade returns true if the client
-		// requested upgrade to the WebSocket protocol.
-		if websocket.IsWebSocketUpgrade(c) {
-			c.Locals("allowed", true)
-			return c.Next()
-		}
-		return fiber.ErrUpgradeRequired
-	})
-	v1.Post("/ws/:id", websocket.New(auction_websockets.Auction))
-
 	// Auth routes
 	v1.Post("/sign-up", usersValidator.SignUpValidator, usersHandler.SignUp)
 	v1.Post("/sign-in", usersValidator.SignInValidator, usersHandler.SignIn)
@@ -57,7 +46,8 @@ func SetRoutes(app *fiber.App) {
 	v1.Delete("/auctions/:id", middlewares.Auth(), auctionValidator.Delete, auctionHandler.Delete)
 	v1.Post("/auctions/:id/start", middlewares.Auth(), auctionValidator.Start, auctionHandler.Start)
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
-	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
+	//v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
+	app.Get("/v1/auctions/:id/participate", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
 
 	// Balance routes
 	balance := v1.Group("/balance")
@@ -66,7 +56,6 @@ func SetRoutes(app *fiber.App) {
 	balance.Get("/get_balance", middlewares.Auth(), balanceValidator.Balance, balanceHandler.Balance)
 
 	// Get tags like
-	//tags := v1.Group("/tags")
 	v1.Get("/tags", tagsValidator.ByPattern, tagsHandler.ByPattern)
 
 	// File uploader

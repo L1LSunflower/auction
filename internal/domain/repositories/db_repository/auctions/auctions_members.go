@@ -34,15 +34,9 @@ func (r *Repository) Member(ctx context.Context, auctionID int, userID string) (
 	}
 
 	auctionMember := &entities.AuctionMember{}
-	rows, err := db.Query("select auction_id, participant_id from auction_members where auction_id=? and participant_id=?", auctionID, userID)
-	if err != nil {
+	row := db.QueryRow("select auction_id, participant_id from auction_members where auction_id=? and participant_id=?", auctionID, userID)
+	if err = row.Scan(&auctionMember.AuctionID, &auctionMember.ParticipantID); err != nil {
 		return nil, err
-	}
-
-	for rows.Next() {
-		if err = rows.Scan(&auctionMember.AuctionID, &auctionMember.ParticipantID); err != nil {
-			return nil, err
-		}
 	}
 
 	return auctionMember, nil
