@@ -394,7 +394,20 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	auctionMember, err := db_repository.AuctionInterface.CreateMember(ctx, auction.ID, user.ID)
+	if auction.Status == entities.ActiveStatus {
+		return nil, errorhandler.ErrActiveAuctionExist
+	}
+
+	auctionMember, err := db_repository.AuctionInterface.Member(ctx, auction.ID, user.ID)
+	if err != nil || auctionMember != nil {
+		return nil, errorhandler.ErrAddAcutionMember
+	}
+
+	if auctionMember.AuctionID <= 0 && len(auctionMember.ParticipantID) <= 0 {
+		return nil, errorhandler.ErrAlreadyAuctionMember
+	}
+
+	auctionMember, err = db_repository.AuctionInterface.CreateMember(ctx, auction.ID, user.ID)
 	if err != nil || auctionMember == nil {
 		return nil, errorhandler.ErrParticipate
 	}
