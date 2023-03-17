@@ -124,6 +124,10 @@ func SignIn(ctx context.Context, request *userRequest.SignIn) (*aggregates.UserT
 		return nil, errorhandler.ErrFindByPhone
 	}
 
+	if userToken.User.CreatedAt.IsZero() {
+		return nil, errorhandler.ErrFindByPhone
+	}
+
 	if request.Password != userToken.User.Password {
 		return nil, errorhandler.WrongPassword
 	}
