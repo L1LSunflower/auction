@@ -25,7 +25,11 @@ func Credit(ctx context.Context, credit *balanceReq.Credit) (*aggregates.UserBal
 	defer context_with_depends.DBTxRollback(ctx)
 
 	userBalance := &aggregates.UserBalance{}
-	if userBalance.User, err = db_repository.UserInterface.User(ctx, credit.ID); err != nil {
+	if userBalance.User, err = db_repository.UserInterface.User(ctx, credit.ID); err != nil || userBalance.User == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	if userBalance.User.CreatedAt.IsZero() {
 		return nil, errorhandler.ErrUserNotExist
 	}
 
