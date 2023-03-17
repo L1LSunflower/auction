@@ -19,7 +19,11 @@ import (
 func SetRoutes(app *fiber.App) {
 	app.Get("/__health", Healthcheck)
 
-	app.Use("/ws", func(c *fiber.Ctx) error {
+	v1 := app.Group("/v1")
+	v1.Use(middlewares.Attempts())
+	v1.Use(middlewares.BearerAuth())
+
+	v1.Use("/ws", func(c *fiber.Ctx) error {
 		// IsWebSocketUpgrade returns true if the client
 		// requested upgrade to the WebSocket protocol.
 		if websocket.IsWebSocketUpgrade(c) {
@@ -28,11 +32,7 @@ func SetRoutes(app *fiber.App) {
 		}
 		return fiber.ErrUpgradeRequired
 	})
-	app.Post("/ws/:id", websocket.New(auction_websockets.Auction))
-
-	v1 := app.Group("/v1")
-	v1.Use(middlewares.Attempts())
-	v1.Use(middlewares.BearerAuth())
+	v1.Post("/ws/:id", websocket.New(auction_websockets.Auction))
 
 	// Auth routes
 	v1.Post("/sign-up", usersValidator.SignUpValidator, usersHandler.SignUp)
