@@ -1,7 +1,7 @@
 package balances
 
 type Credit struct {
-	ID     string  `validate:"require"`
+	ID     string  `validate:"required"`
 	Pan    string  `json:"pan" validate:"required"`
 	CVV    string  `json:"cvv" validate:"required"`
 	Amount float64 `json:"amount" validate:"required"`

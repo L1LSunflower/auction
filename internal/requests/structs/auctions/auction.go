@@ -58,5 +58,5 @@ type Delete struct {
 
 type Participate struct {
 	AuctionID int    `validate:"required"`
-	UserID    string `validate:"require"`
+	UserID    string `validate:"required"`
 }
