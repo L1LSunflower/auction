@@ -21,7 +21,7 @@ func Debit(ctx *fiber.Ctx, balance *aggregates.UserBalance) error {
 	return ctx.JSON(&balanceResp.Credit{
 		Status:  successStatus,
 		ID:      balance.Balance.ID,
-		Balance: balance.Balance.Balance,
+		Balance: balance.Balance.Balance - 1000,
 		Date:    time.Now().Format(dateFormat),
 	})
 }

@@ -46,8 +46,8 @@ func SetRoutes(app *fiber.App) {
 	v1.Delete("/auctions/:id", middlewares.Auth(), auctionValidator.Delete, auctionHandler.Delete)
 	v1.Post("/auctions/:id/start", middlewares.Auth(), auctionValidator.Start, auctionHandler.Start)
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
-	//v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
-	app.Get("/v1/auctions/:id/participate", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
+	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
+	app.Get("/v1/auctions/participate/:id", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
 
 	// Balance routes
 	balance := v1.Group("/balance")
