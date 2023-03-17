@@ -6,6 +6,7 @@ import (
 )
 
 type AuctionAggregation struct {
+	OwnerUser *entities.User
 	User      *entities.User
 	Auction   *entities.Auction
 	Item      *entities.Item

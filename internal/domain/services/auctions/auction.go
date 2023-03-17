@@ -100,6 +100,10 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 		return nil, errorhandler.ErrGetTags
 	}
 
+	if auctionAgg.OwnerUser, err = db_repository.UserInterface.User(ctx, auctionAgg.Auction.OwnerID); err != nil {
+		return nil, errorhandler.ErrUserExist
+	}
+
 	member, err := db_repository.AuctionInterface.Member(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
 	if err != nil && member == nil {
 		auctionAgg.Member = false

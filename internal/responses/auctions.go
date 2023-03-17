@@ -42,7 +42,7 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 		Status:           successStatus,
 		Member:           auction.Member,
 		ID:               auction.Auction.ID,
-		Phone:            auction.Auction.OwnerID,
+		Phone:            auction.OwnerUser.Phone,
 		Category:         auction.Auction.Category,
 		WinnerID:         auction.Auction.WinnerID,
 		Title:            auction.Item.Name,
