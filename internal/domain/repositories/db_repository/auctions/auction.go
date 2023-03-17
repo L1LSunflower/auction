@@ -196,7 +196,8 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 	fields := []string{
 		"start_price=?",
 		"minimal_price=?",
-		"status=?",
+		"short_description=?",
+		"started_at=?",
 		"updated_at=now()",
 	}
 
@@ -205,7 +206,8 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 		query,
 		auction.StartPrice,
 		auction.MinPrice,
-		auction.Status,
+		auction.ShortDescription,
+		auction.StartedAt,
 		auction.ID,
 	); err != nil {
 		return err

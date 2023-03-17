@@ -29,10 +29,6 @@ func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.Auctio
 		return nil, errorhandler.ErrUserNotExist
 	}
 
-	//if auctionAgg.User.CreatedAt.IsZero() {
-	//	return nil, errorhandler.ErrUserNotExist
-	//}
-
 	if auctionAgg.Auction, err = db_repository.AuctionInterface.ActiveAuction(ctx, request.OwnerID); err != nil {
 		return nil, errorhandler.InternalError
 	}
@@ -138,8 +134,6 @@ func Auctions(ctx context.Context, request *auctionReq.Auctions) ([]*aggregates.
 	if err = services.GetLimitAndOffset(request.Metadata); err != nil {
 		return nil, err
 	}
-
-	//tagsString := metadata.ConcatStrings(request.Tags, ",")
 	whereString := metadata.ConcatStrings(request.Where, " and ")
 
 	auctions, err := db_repository.AuctionInterface.Auctions(ctx, whereString, request.Tags, request.OrderBy, request.Metadata)
@@ -183,7 +177,7 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 		return nil, errorhandler.ErrDoesNotExistAuction
 	}
 
-	if auctionAgg.Auction.Status == entities.ActiveStatus {
+	if auctionAgg.Auction.Status != entities.InactiveStatus {
 		return nil, errorhandler.ErrUpdateActiveAuction
 	}
 
@@ -265,7 +259,7 @@ func Update(ctx context.Context, request *auctionReq.Update) (*aggregates.Auctio
 		}
 	}
 
-	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, request.Category, request.ShortDescription, request.StartDate)
+	auctionAgg.CreateAuction(request.StartPrice, request.MinimalPrice, auctionAgg.Auction.Category, request.ShortDescription, request.StartDate)
 	if err = db_repository.AuctionInterface.Update(ctx, auctionAgg.Auction); err != nil {
 		return nil, errorhandler.ErrCreateAuction
 	}

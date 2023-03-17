@@ -30,12 +30,20 @@ func Update(ctx context.Context, request *userRequest.Update) (*entities.User, e
 		return nil, errorhandler.ErrUserNotExist
 	}
 
-	user = &entities.User{
-		ID:        user.ID,
-		Email:     request.Email,
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
-		Password:  request.Password,
+	if len(request.Email) > 0 {
+		user.Email = request.Email
+	}
+
+	if len(request.FirstName) > 0 {
+		user.FirstName = request.FirstName
+	}
+
+	if len(request.LastName) > 0 {
+		user.LastName = request.LastName
+	}
+
+	if len(request.Password) > 0 {
+		user.Password = request.Password
 	}
 
 	if err := db_repository.UserInterface.Update(ctx, user); err != nil {
@@ -62,7 +70,7 @@ func Delete(ctx context.Context, request *userRequest.Delete) (*entities.User, e
 		return nil, errorhandler.ErrDeleteAuctions
 	}
 
-	if err := db_repository.UserInterface.Delete(ctx, request.ID); err != nil {
+	if err = db_repository.UserInterface.Delete(ctx, request.ID); err != nil {
 		return nil, err
 	}
 
