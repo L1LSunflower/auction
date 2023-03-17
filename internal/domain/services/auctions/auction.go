@@ -25,7 +25,11 @@ func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.Auctio
 
 	auctionAgg := &aggregates.AuctionAggregation{}
 
-	if auctionAgg.User, _ = db_repository.UserInterface.User(ctx, request.OwnerID); auctionAgg.User == nil {
+	if auctionAgg.User, err = db_repository.UserInterface.User(ctx, request.OwnerID); err != nil || auctionAgg.User == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	if auctionAgg.User.CreatedAt.IsZero() {
 		return nil, errorhandler.ErrUserNotExist
 	}
 
