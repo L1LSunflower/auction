@@ -113,18 +113,10 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 		auctionAgg.Member = false
 	}
 
-	if auctionAgg.User != nil {
-		auctionAgg.Member = false
-	}
-
 	if member != nil {
-		auctionAgg.Member = false
-	} else if member != nil {
-		if auctionAgg.User.ID == member.ParticipantID {
+		if len(member.ParticipantID) > 0 {
 			auctionAgg.Member = true
 		}
-	} else {
-		auctionAgg.Member = false
 	}
 
 	return auctionAgg, nil
