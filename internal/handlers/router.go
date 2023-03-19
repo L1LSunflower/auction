@@ -19,6 +19,8 @@ import (
 func SetRoutes(app *fiber.App) {
 	app.Get("/__health", Healthcheck)
 
+	app.Get("/auctions/:id", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
+
 	v1 := app.Group("/v1")
 	v1.Use(middlewares.Attempts())
 	v1.Use(middlewares.BearerAuth())
@@ -47,7 +49,6 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/auctions/:id/start", middlewares.Auth(), auctionValidator.Start, auctionHandler.Start)
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
 	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
-	app.Get("/v1/auctions/participate/:id", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
 
 	// Balance routes
 	balance := v1.Group("/balance")
