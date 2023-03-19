@@ -56,7 +56,7 @@ func Auction(c *websocket.Conn) {
 		return
 	}
 
-	auctionOffer := &auctionReq.AmountOffer{ID: "0186bfd7-bafa-73d3-ad20-ee9dc729e49d", Amount: 15003}
+	auctionOffer := &auctionReq.AmountOffer{}
 	if err = c.ReadJSON(auctionOffer); err != nil {
 		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to parser request"}); err != nil {
 			log.Println("ERROR: failed to get auction with that id")
