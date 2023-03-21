@@ -14,8 +14,6 @@ import (
 
 const (
 	fieldsSeparator = ","
-	whereSeparator  = " AND "
-	dateFormat      = "2006-01-02 15:04:05"
 )
 
 type Repository struct{}
@@ -222,7 +220,7 @@ func (r *Repository) Start(ctx context.Context, id int, endedDate time.Time) err
 		return err
 	}
 
-	if _, err = tx.Exec("update auctions set started_at=now(), status='active', ended_at=?, updated_at=now() where id=?", id, endedDate.Format(dateFormat)); err != nil {
+	if _, err = tx.Exec("update auctions set started_at=now(), status='active', ended_at=?, updated_at=now() where id=?", id, endedDate.Format(entities.DateFormat)); err != nil {
 		return err
 	}
 
@@ -441,6 +439,32 @@ func (r *Repository) UpdatePrice(ctx context.Context, id int, price float64) err
 	}
 
 	if _, err = tx.Exec("update auctions set price=? where id=?", price, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) ActivateAuctions(ctx context.Context) error {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = db.Query("update auctions set status=?, ended_at=now() + interval 12 hour where status=? and started_at <= now() and deleted_at is null", entities.ActiveStatus, entities.InactiveStatus); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) EndAuctions(ctx context.Context) error {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = db.Query("update auctions set status=? where status=? and ended_at <= now() and deleted_at is null", entities.CompletedStatus, entities.ActiveStatus); err != nil {
 		return err
 	}
 

@@ -45,11 +45,13 @@ type Update struct {
 
 type Start struct {
 	ID      int       `validate:"required"`
-	EndedAt time.Time `json:"ended_at" validate:"required"`
+	UserID  string    `validate:"required"`
+	EndedAt time.Time `json:"end_date" validate:"required"`
 }
 
 type End struct {
-	ID int `validate:"required"`
+	ID     int    `validate:"required"`
+	UserID string `validate:"required"`
 }
 
 type Delete struct {

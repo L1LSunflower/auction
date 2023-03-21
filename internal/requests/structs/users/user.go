@@ -51,3 +51,8 @@ type ChangePassword struct {
 	Code     string `json:"code" validate:"required,len=4"`
 	Password string `json:"password" validate:"required"`
 }
+
+type AuthWS struct {
+	ID     string `json:"id" validate:"required,uuid"`
+	Access string `json:"access" validate:"required"`
+}

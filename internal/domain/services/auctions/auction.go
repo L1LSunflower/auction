@@ -291,6 +291,10 @@ func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, e
 		return nil, errorhandler.ErrAuctionNotExist
 	}
 
+	if auction.OwnerID != request.UserID {
+		return nil, errorhandler.ErrFailedStartAuction
+	}
+
 	if auction.Status != entities.InactiveStatus {
 		return nil, errorhandler.ErrFailedStartAuction
 	}
@@ -312,6 +316,10 @@ func End(ctx context.Context, request *auctionReq.End) (*entities.Auction, error
 	auction, err := db_repository.AuctionInterface.Auction(ctx, request.ID)
 	if err != nil || auction == nil {
 		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	if auction.OwnerID != request.UserID {
+		return nil, errorhandler.ErrFailedStartAuction
 	}
 
 	if auction.Status != entities.ActiveStatus {
@@ -400,7 +408,7 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 
 	auctionMember, err := db_repository.AuctionInterface.Member(ctx, auction.ID, user.ID)
 	if err != nil || auctionMember != nil {
-		return nil, errorhandler.ErrAddAcutionMember
+		return nil, errorhandler.ErrAddAuctionMember
 	}
 
 	if auctionMember.AuctionID <= 0 && len(auctionMember.ParticipantID) <= 0 {

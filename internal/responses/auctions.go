@@ -11,8 +11,6 @@ import (
 	"github.com/L1LSunflower/auction/internal/responses/structs"
 )
 
-const dateFormat = "2006-01-02 15:04:05"
-
 func CreateAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 	return ctx.JSON(&structs.CreateAuction{
 		Status: successStatus,
@@ -51,8 +49,8 @@ func Auction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 		Description:      auction.Item.Description,
 		StartPrice:       auction.Auction.StartPrice,
 		MinimalPrice:     auction.Auction.MinPrice,
-		StartDate:        auction.Auction.StartedAt.Format(dateFormat),
-		EndedAt:          auction.Auction.EndedAt.Format(dateFormat),
+		StartDate:        auction.Auction.StartedAt.Format(entities.DateFormat),
+		EndedAt:          auction.Auction.EndedAt.Format(entities.DateFormat),
 		Files:            files,
 		Tags:             tags,
 	})
@@ -98,8 +96,8 @@ func UpdateAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error
 		AuctionStatus:    auction.Auction.Status,
 		StartPrice:       auction.Auction.StartPrice,
 		MinimalPrice:     auction.Auction.MinPrice,
-		StartDate:        auction.Auction.StartedAt.Format(dateFormat),
-		EndedAt:          auction.Auction.EndedAt.Format(dateFormat),
+		StartDate:        auction.Auction.StartedAt.Format(entities.DateFormat),
+		EndedAt:          auction.Auction.EndedAt.Format(entities.DateFormat),
 		Files:            files,
 	})
 }
@@ -107,14 +105,14 @@ func UpdateAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error
 func StartAuction(ctx *fiber.Ctx, auction *entities.Auction) error {
 	return ctx.JSON(&structs.Start{
 		Status: successStatus,
-		Date:   time.Now().Format(dateFormat),
+		Date:   time.Now().Format(entities.DateFormat),
 	})
 }
 
 func EndAuction(ctx *fiber.Ctx, auction *entities.Auction) error {
 	return ctx.JSON(&structs.End{
 		Status:   successStatus,
-		Date:     time.Now().Format(dateFormat),
+		Date:     time.Now().Format(entities.DateFormat),
 		WinnerID: auction.WinnerID,
 	})
 }
@@ -122,12 +120,12 @@ func EndAuction(ctx *fiber.Ctx, auction *entities.Auction) error {
 func DeleteAuction(ctx *fiber.Ctx, auction *aggregates.AuctionAggregation) error {
 	return ctx.JSON(&structs.Delete{
 		Status: successStatus,
-		Date:   time.Now().Format(dateFormat),
+		Date:   time.Now().Format(entities.DateFormat),
 	})
 }
 
 func Participate(ctx *fiber.Ctx, auctionMember *entities.AuctionMember) error {
-	return ctx.JSON(fiber.Map{"status": successStatus, "date": time.Now().Format(dateFormat)})
+	return ctx.JSON(fiber.Map{"status": successStatus, "date": time.Now().Format(entities.DateFormat)})
 }
 
 func GetFirstVideoOrImage(files []string) string {

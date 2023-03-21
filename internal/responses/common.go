@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	errorStatus   = "error"
 	successStatus = "success"
 )
 
@@ -45,4 +44,11 @@ func NewValidationErrResponse(ctx *fiber.Ctx, err error) error {
 		StatusCode: errorhandler.ErrParseRequestCode,
 		Message:    err.Error(),
 	})
+}
+
+func NewErrorResponse(statusCode int, err error) any {
+	return &structs.ErrorResponse{
+		StatusCode: statusCode,
+		Message:    err.Error(),
+	}
 }

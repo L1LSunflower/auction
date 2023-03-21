@@ -1,6 +1,10 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	"github.com/L1LSunflower/auction/internal/requests/structs/users"
+)
 
 type User struct {
 	ID        string    `db:"id,required"`
@@ -12,4 +16,20 @@ type User struct {
 	City      string    `db:"city,omitempty"`
 	CreatedAt time.Time `db:"created_at,omitempty"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
+}
+
+func NewUser() *User {
+	return &User{}
+}
+
+func NewUserFromRequest(uuid string, request *users.SignUp) *User {
+	return &User{
+		ID:        uuid,
+		Phone:     request.Phone,
+		Email:     request.Email,
+		Password:  request.Password,
+		FirstName: request.FirstName,
+		LastName:  request.LastName,
+		City:      request.City,
+	}
 }

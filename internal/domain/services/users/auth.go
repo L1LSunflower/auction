@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"github.com/L1LSunflower/auction/internal/domain/aggregates"
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/domain/repositories/db_repository"
@@ -10,18 +11,21 @@ import (
 	userRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
 	"github.com/L1LSunflower/auction/internal/tools/context_with_depends"
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
+	"github.com/L1LSunflower/auction/pkg/logger"
+	"github.com/L1LSunflower/auction/pkg/logger/message"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofrs/uuid"
 )
 
 func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, error) {
 	var (
-		user = &entities.User{}
+		user = entities.NewUser()
 		err  error
 	)
 
 	user, err = redis_repository.UserInterface.User(ctx, request.Phone)
 	if err != nil && err != redis.Nil {
+		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to store user with error: %s", err.Error())))
 		return nil, errorhandler.ErrStoreUser
 	}
 
@@ -31,7 +35,8 @@ func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, e
 
 	user, err = db_repository.UserInterface.UserByPhone(ctx, request.Phone)
 	if err != nil {
-		return nil, errorhandler.ErrFindByPhone
+		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to get user by phone with error: %s", err.Error())))
+		return nil, errorhandler.InternalError
 	}
 
 	if !user.CreatedAt.IsZero() {
@@ -40,28 +45,21 @@ func SignUp(ctx context.Context, request *userRequest.SignUp) (*entities.User, e
 
 	uid, err := uuid.NewV7()
 	if err != nil {
-		return nil, errorhandler.ErrUserExist
+		return nil, errorhandler.InternalError
 	}
 
-	user = &entities.User{
-		ID:        uid.String(),
-		Phone:     request.Phone,
-		Email:     request.Email,
-		Password:  request.Password,
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
-		City:      request.City,
-	}
-
+	user = entities.NewUserFromRequest(uid.String(), request)
 	if err = redis_repository.UserInterface.Create(ctx, user); err != nil {
 		return nil, errorhandler.ErrCreateUser
 	}
 
 	code := services.GenerateRandomCode()
 	//if err = sms.SendSMS(request.Phone, code); err != nil {
+	//logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send otp code on phone: %s with error: %s", request.Phone, err.Error())))
 	//	return nil, errorhandler.ErrSendOtp
 	//}
 	if err = redis_repository.UserInterface.StoreUserCode(ctx, uid.String(), code); err != nil {
+		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to store user: %s, otp code with error: %s", uid.String(), err.Error())))
 		return nil, errorhandler.ErrStoreOtp
 	}
 
@@ -169,7 +167,7 @@ func SendRestoreCode(ctx context.Context, request *userRequest.RestorePassword) 
 	//	return err
 	//}
 
-	if err := redis_repository.UserInterface.StoreUserCode(ctx, user.Phone, code); err != nil {
+	if err = redis_repository.UserInterface.StoreUserCode(ctx, user.Phone, code); err != nil {
 		return errorhandler.ErrStoreOtp
 	}
 

@@ -49,8 +49,7 @@ func ConfirmValidator(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	request.ID = ctx.Params("id")
-	if len(request.ID) != uuidLength {
+	if request.ID = ctx.Params("id"); len(request.ID) != uuidLength {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
@@ -96,6 +95,7 @@ func RestoreValidator(ctx *fiber.Ctx) error {
 }
 
 func RefreshValidator(ctx *fiber.Ctx) error {
+	var ok bool
 	request := &userRequest.Tokens{}
 
 	if request.AccessToken = ctx.Get("access"); request.AccessToken == "" {
@@ -106,7 +106,7 @@ func RefreshValidator(ctx *fiber.Ctx) error {
 		return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
 	}
 
-	if request.ID = ctx.Get("id"); request.ID == "" {
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 
@@ -120,6 +120,7 @@ func RefreshValidator(ctx *fiber.Ctx) error {
 
 func ChangePasswordValidator(ctx *fiber.Ctx) error {
 	request := &userRequest.ChangePassword{}
+
 	if err := requests.ParseRequest(ctx, request); err != nil {
 		return err
 	}
@@ -136,6 +137,7 @@ func ChangePasswordValidator(ctx *fiber.Ctx) error {
 func UpdateValidator(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &userRequest.Update{}
+
 	if err := requests.ParseRequest(ctx, request); err != nil {
 		return err
 	}
@@ -156,6 +158,7 @@ func UpdateValidator(ctx *fiber.Ctx) error {
 func DeleteValidator(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &userRequest.Delete{}
+
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
@@ -172,6 +175,7 @@ func DeleteValidator(ctx *fiber.Ctx) error {
 func ProfileValidator(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &userRequest.User{}
+	
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}

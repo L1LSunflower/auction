@@ -51,7 +51,7 @@ func (r *Repository) User(ctx context.Context, id string) (*entities.User, error
 		return nil, err
 	}
 
-	user := &entities.User{}
+	user := entities.NewUser()
 	fields := []string{
 		"id",
 		"phone",
@@ -85,7 +85,7 @@ func (r *Repository) UserByPhone(ctx context.Context, phone string) (*entities.U
 		return nil, err
 	}
 
-	user := &entities.User{}
+	user := entities.NewUser()
 	fields := []string{
 		"id",
 		"phone",

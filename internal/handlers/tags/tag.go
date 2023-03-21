@@ -23,6 +23,7 @@ func ByPattern(ctx *fiber.Ctx) error {
 
 	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
 	redisConn := redisdb.RedisInstance().RedisClient
+
 	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
 	if err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)

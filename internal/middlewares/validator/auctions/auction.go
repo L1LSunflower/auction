@@ -122,26 +122,41 @@ func Update(ctx *fiber.Ctx) error {
 }
 
 func Start(ctx *fiber.Ctx) error {
-	var err error
+	var (
+		ok  bool
+		err error
+	)
 	request := &requestAuction.Start{}
 
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
-	ctx.Locals(requests.RequestKey, request)
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
 
 	if err = validator.ValidateRequest(request); err != nil {
 		return responses.NewValidationErrResponse(ctx, err)
 	}
 
+	ctx.Locals(requests.RequestKey, request)
+
 	return ctx.Next()
 }
 
 func End(ctx *fiber.Ctx) error {
-	var err error
+	var (
+		ok  bool
+		err error
+	)
 	request := &requestAuction.End{}
 
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
 

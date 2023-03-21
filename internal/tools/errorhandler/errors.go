@@ -56,7 +56,7 @@ var (
 	ErrFailedToGetTags      = errors.New("failed to get tags from url params")
 	ErrEndAuction           = errors.New("failed to end auction")
 	ErrParticipate          = errors.New("failed to add participate user for auction")
-	ErrAddAcutionMember     = errors.New("failed to add auction member")
+	ErrAddAuctionMember     = errors.New("failed to add auction member")
 	ErrAlreadyAuctionMember = errors.New("already auction member")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")

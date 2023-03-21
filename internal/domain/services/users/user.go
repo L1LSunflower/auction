@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"database/sql"
 	"github.com/L1LSunflower/auction/internal/domain/aggregates"
 	"github.com/L1LSunflower/auction/internal/domain/entities"
 	"github.com/L1LSunflower/auction/internal/domain/repositories/db_repository"
@@ -12,7 +13,11 @@ import (
 
 func User(ctx context.Context, request *userRequest.User) (*entities.User, error) {
 	user, err := db_repository.UserInterface.User(ctx, request.ID)
-	if err != nil || user == nil {
+	if err != nil && err != sql.ErrNoRows {
+		return nil, errorhandler.InternalError
+	}
+
+	if user == nil || user.CreatedAt.IsZero() {
 		return nil, errorhandler.ErrUserExist
 	}
 

@@ -3,6 +3,8 @@ package middlewares
 import (
 	"context"
 	"github.com/L1LSunflower/auction/internal/requests"
+	usersRequest "github.com/L1LSunflower/auction/internal/requests/structs/users"
+	"github.com/gofiber/websocket/v2"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
@@ -42,4 +44,32 @@ func Auth() fiber.Handler {
 		return ctx.Next()
 
 	}
+}
+
+func AuthWS(conn *websocket.Conn, ctx context.Context) (*usersRequest.AuthWS, any) {
+	var err error
+	auth := &usersRequest.AuthWS{}
+
+	if err = conn.ReadJSON(auth); err != nil {
+		// Status code 125 = message: "auth required"
+		return nil, responses.NewErrorResponse(125, err)
+	}
+
+	tokens, err := redis_repository.UserInterface.Tokens(ctx, auth.ID)
+	if err != nil && err != redis.Nil {
+		// Status code 125 = message: "auth required"
+		return nil, responses.NewErrorResponse(126, errorhandler.ErrGetTokens)
+	}
+
+	if tokens == nil {
+		// Status code 126 = message: "err get tokens"
+		return nil, responses.NewErrorResponse(126, errorhandler.ErrGetTokens)
+	}
+
+	if tokens.AccessToken != auth.Access {
+		// Status code 124 = message: "wrong tokens"
+		return nil, responses.NewErrorResponse(124, errorhandler.WrongTokens)
+	}
+
+	return auth, nil
 }
