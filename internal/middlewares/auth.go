@@ -52,7 +52,7 @@ func AuthWS(conn *websocket.Conn, ctx context.Context) (*usersRequest.AuthWS, an
 
 	if err = conn.ReadJSON(auth); err != nil {
 		// Status code 125 = message: "auth required"
-		return nil, responses.NewErrorResponse(125, err)
+		return nil, responses.NewErrorResponse(125, errorhandler.AuthRequired)
 	}
 
 	tokens, err := redis_repository.UserInterface.Tokens(ctx, auth.ID)

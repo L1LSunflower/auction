@@ -46,6 +46,10 @@ func Auction(c *websocket.Conn) {
 		return
 	}
 
+	if err = c.WriteJSON(fiber.Map{"status": "success", "message": "authenticated successfully"}); err != nil {
+		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to write json in websocket with error: %s", err.Error())))
+	}
+
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction"}); err != nil {
