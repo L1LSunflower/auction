@@ -100,7 +100,7 @@ func (r *Repository) UserByPhone(ctx context.Context, phone string) (*entities.U
 
 	query := fmt.Sprintf("select %s from users where phone=? and deleted_at is null", strings.Join(fields, fieldsSeparator))
 	rows, err := db.Query(query, phone)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 

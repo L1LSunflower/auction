@@ -2,9 +2,11 @@ package drivers
 
 import (
 	"encoding/json"
-	"github.com/L1LSunflower/auction/pkg/logger/message"
-	"github.com/sirupsen/logrus"
 	"os"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/L1LSunflower/auction/pkg/logger/message"
 )
 
 type StdoutDriver struct {
@@ -36,6 +38,10 @@ func (l *StdoutDriver) Panic(msg *message.LogMessage) {
 	l.write(logrus.PanicLevel, msg)
 }
 
+func (l *StdoutDriver) Close() {
+	l.log.Exit(0)
+}
+
 func (l *StdoutDriver) write(level logrus.Level, msg *message.LogMessage) {
 	j, err := json.Marshal(msg)
 
@@ -44,12 +50,11 @@ func (l *StdoutDriver) write(level logrus.Level, msg *message.LogMessage) {
 	}
 
 	l.log.SetFormatter(&logrus.JSONFormatter{PrettyPrint: false})
-	l.log.SetOutput(os.Stdout)
 	l.log.Log(level, string(j))
 }
 
 // MakeStdoutLogger creates logrus instance and sets log level
-func MakeStdoutLogger(level string) *StdoutDriver {
+func MakeStdoutLogger(level string) LogInterface {
 	var lev logrus.Level
 
 	switch level {
@@ -80,6 +85,7 @@ func MakeStdoutLogger(level string) *StdoutDriver {
 
 	l := logrus.New()
 	l.SetLevel(lev)
+	l.SetOutput(os.Stdout)
 
 	return &StdoutDriver{log: l, level: lev}
 }

@@ -1,4 +1,5 @@
 .idea/
 static/
+*.log
 goose
 auction

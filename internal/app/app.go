@@ -24,7 +24,7 @@ func App() {
 	app.Use(cors.New())
 	// internal Config
 	cfg := config.GetConfig()
-	logger.Log = logger.New(cfg.Log.Level, cfg.Log.Driver, "")
+	logger.Log = logger.New(cfg.Log.Level, cfg.Log.Driver)
 	// Set routes
 	handlers.SetRoutes(app)
 	// Start workers
