@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	StartAuctionsInterval = 3 * time.Minute
-	EndAuctionsInterval   = 1 * time.Minute
+	StartAuctionsInterval = 15 * time.Minute
+	EndAuctionsInterval   = 20 * time.Minute
 )
 
 func StartWorkers() {
