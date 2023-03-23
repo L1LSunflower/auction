@@ -407,7 +407,7 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 	}
 
 	auctionMember, err := db_repository.AuctionInterface.Member(ctx, auction.ID, user.ID)
-	if err != nil || auctionMember != nil {
+	if err != nil || auctionMember.AuctionID <= 0 {
 		return nil, errorhandler.ErrAddAuctionMember
 	}
 
