@@ -402,7 +402,7 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 		return nil, errorhandler.ErrAuctionNotExist
 	}
 
-	if auction.Status == entities.ActiveStatus {
+	if auction.Status != entities.ActiveStatus {
 		return nil, errorhandler.ErrActiveAuctionExist
 	}
 
