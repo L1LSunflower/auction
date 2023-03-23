@@ -299,7 +299,7 @@ func Start(ctx context.Context, request *auctionReq.Start) (*entities.Auction, e
 		return nil, errorhandler.ErrFailedStartAuction
 	}
 
-	if err := db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
+	if err = db_repository.AuctionInterface.Start(ctx, auction.ID, request.EndedAt); err != nil {
 		return nil, errorhandler.ErrFailedStartAuction
 	}
 

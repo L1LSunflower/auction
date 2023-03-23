@@ -220,7 +220,7 @@ func (r *Repository) Start(ctx context.Context, id int, endedDate time.Time) err
 		return err
 	}
 
-	if _, err = tx.Exec("update auctions set started_at=now(), status='active', ended_at=?, updated_at=now() where id=?", id, endedDate.Format(entities.DateFormat)); err != nil {
+	if _, err = tx.Exec("update auctions set started_at=now(), status='active', ended_at=?, updated_at=now() where id=?", endedDate, id); err != nil {
 		return err
 	}
 
