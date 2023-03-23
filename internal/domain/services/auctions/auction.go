@@ -403,7 +403,7 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 	}
 
 	if auction.Status != entities.ActiveStatus {
-		return nil, errorhandler.ErrActiveAuctionExist
+		return nil, errorhandler.ErrActiveAuctionNotExist
 	}
 
 	auctionMember, err := db_repository.AuctionInterface.Member(ctx, auction.ID, user.ID)
