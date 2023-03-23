@@ -128,6 +128,10 @@ func Start(ctx *fiber.Ctx) error {
 	)
 	request := &requestAuction.Start{}
 
+	if err = requests.ParseRequest(ctx, request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
 	if request.ID, err = ctx.ParamsInt("id"); err != nil {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}
