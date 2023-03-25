@@ -21,7 +21,7 @@ func Auction(c *websocket.Conn) {
 	)
 
 	bearerToken := config.GetConfig().BearerToken
-	auth := auctions.WSAuth{}
+	auth := &auctions.WSAuth{}
 
 	if err = c.ReadJSON(auth); err != nil {
 		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to parse request"}); err != nil {
