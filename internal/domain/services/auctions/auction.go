@@ -454,7 +454,7 @@ func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error
 
 	go SendPrice(request.AuctionID, request.Price)
 
-	return auction.Price, nil
+	return request.Price, nil
 }
 
 func SendPrice(auctionID int, price float64) {
