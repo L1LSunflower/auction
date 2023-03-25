@@ -49,6 +49,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/auctions/:id/start", middlewares.Auth(), auctionValidator.Start, auctionHandler.Start)
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
 	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
+	v1.Post("/auctions/:id/set_price", middlewares.Auth(), auctionValidator.SetPrice, auctionHandler.SetPrice)
 
 	// Balance routes
 	balance := v1.Group("/balance")

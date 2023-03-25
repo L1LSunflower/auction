@@ -190,3 +190,25 @@ func Participate(ctx *fiber.Ctx) error {
 
 	return responses.Participate(ctx, auction)
 }
+
+func SetPrice(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.SetPrice)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	price, err := auctionService.SetPrice(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.SetPrice(ctx, price)
+}

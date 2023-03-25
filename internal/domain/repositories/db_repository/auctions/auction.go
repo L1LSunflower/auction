@@ -470,3 +470,16 @@ func (r *Repository) EndAuctions(ctx context.Context) error {
 
 	return nil
 }
+
+func (r *Repository) SetPrice(ctx context.Context, auctionID int, price float64) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.QueryRow("update auctions set price=? where id=?", price, auctionID).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}

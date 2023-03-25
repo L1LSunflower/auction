@@ -14,6 +14,7 @@ import (
 	"github.com/L1LSunflower/auction/internal/tools/errorhandler"
 	"github.com/L1LSunflower/auction/internal/tools/metadata"
 	"os"
+	"time"
 )
 
 func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.AuctionAggregation, error) {
@@ -422,4 +423,52 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 
 	context_with_depends.DBTxCommit(ctx)
 	return auctionMember, nil
+}
+
+func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return 0, err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return 0, errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction == nil {
+		return 0, errorhandler.ErrAuctionNotExist
+	}
+
+	if auction.Price > request.Price {
+		return 0, errorhandler.ErrPriceLow
+	}
+
+	if err = db_repository.AuctionInterface.SetPrice(ctx, request.AuctionID, request.Price); err != nil {
+		return 0, errorhandler.ErrSetPrice
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	for {
+		if CheckEvent(request.AuctionID) {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	if CheckAuction(request.AuctionID) {
+		RegisterNewEvent(request.AuctionID, request.Price)
+		for {
+			if DataSent(request.AuctionID) {
+				DeleteEvent(request.AuctionID)
+				break
+			}
+			time.Sleep(3 * time.Second)
+		}
+	}
+
+	return auction.Price, nil
 }

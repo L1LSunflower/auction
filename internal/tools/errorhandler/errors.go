@@ -59,6 +59,8 @@ var (
 	ErrParticipate           = errors.New("failed to add participate user for auction")
 	ErrAddAuctionMember      = errors.New("failed to add auction member")
 	ErrAlreadyAuctionMember  = errors.New("already auction member")
+	ErrPriceLow              = errors.New("your price lower than current")
+	ErrSetPrice              = errors.New("failed to set price")
 	// Error for Balances
 	ErrCreateBalance     = errors.New("failed to create user balance")
 	NotEnoughBalance     = errors.New("not enough balance")

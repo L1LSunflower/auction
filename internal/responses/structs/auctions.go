@@ -58,17 +58,28 @@ type Update struct {
 }
 
 type Delete struct {
-	Status string
-	Date   string
+	Status string `json:"status"`
+	Date   string `json:"date"`
 }
 
 type Start struct {
-	Status string
-	Date   string
+	Status string `json:"status"`
+	Date   string `json:"date"`
 }
 
 type End struct {
-	Status   string
-	Date     string
-	WinnerID string
+	Status   string `json:"status"`
+	Date     string `json:"date"`
+	WinnerID string `json:"winner_id"`
+}
+
+type Participate struct {
+	Status string `json:"status"`
+	Date   string `json:"date"`
+}
+
+type SetPrice struct {
+	Status string  `json:"status,required"`
+	Price  float64 `json:"price,required"`
+	Date   string  `json:"date"`
 }

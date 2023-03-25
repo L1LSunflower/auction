@@ -27,6 +27,7 @@ type AuctionInterface interface {
 	Member(ctx context.Context, auctionID int, userID string) (*entities.AuctionMember, error)
 	ActivateAuctions(ctx context.Context) error
 	EndAuctions(ctx context.Context) error
+	SetPrice(ctx context.Context, auctionID int, price float64) error
 }
 
 func NewRepository() AuctionInterface {

@@ -62,3 +62,9 @@ type Participate struct {
 	AuctionID int    `validate:"required"`
 	UserID    string `validate:"required"`
 }
+
+type SetPrice struct {
+	UserID    string  `validate:"required"`
+	AuctionID int     `validate:"required"`
+	Price     float64 `json:"price" validate:"required"`
+}
