@@ -1,8 +1,8 @@
 package auctions
 
-var eventMap map[int]float64
+var eventMap = map[int]float64{}
 
-var stack map[int]map[int]bool
+var stack = map[int]map[int]bool{}
 
 func RegisterNew(auctionID, wsID int) {
 	if st, ok := stack[auctionID]; !ok {
