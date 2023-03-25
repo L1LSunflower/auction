@@ -147,13 +147,13 @@ func (r *Repository) Auctions(ctx context.Context, where, tags, orderBy string, 
 
 	query = fmt.Sprintf(`select %s from auctions a`, strings.Join(fields, fieldsSeparator))
 	if len(tags) > 0 {
-		query += fmt.Sprintf(" join item_tags it on a.item_id = it.item_id join tags t on it.tag_id = t.id where t.name in (%s) and deleted_at is null", tags)
+		query += fmt.Sprintf(" join item_tags it on a.item_id = it.item_id join tags t on it.tag_id = t.id where t.name in (%s) and deleted_at is null status <>", tags, entities.CompletedStatus)
 	} else {
-		query += " where deleted_at is null"
+		query += fmt.Sprintf(" where deleted_at is null status <> %s", entities.CompletedStatus)
 	}
 
 	if len(where) > 0 {
-		query += fmt.Sprintf(" and %s", where)
+		query += fmt.Sprintf(" and %s and status <> ?", where, entities.CompletedStatus)
 	}
 
 	if len(orderBy) > 0 {
