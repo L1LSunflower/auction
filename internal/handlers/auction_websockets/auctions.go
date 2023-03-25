@@ -42,6 +42,7 @@ func Auction(c *websocket.Conn) {
 		if err = c.WriteJSON(fiber.Map{"status": "error", "message": "failed to get auction id"}); err != nil {
 			logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send data with error: %s", err)))
 		}
+		return
 	}
 
 	wsID = auctionService.LengthStackOfAuction(auctionID)
