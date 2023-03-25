@@ -459,7 +459,7 @@ func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error
 
 func SendPrice(auctionID int, price float64) {
 	for {
-		if CheckEvent(auctionID) {
+		if !CheckEvent(auctionID) {
 			break
 		}
 		time.Sleep(1 * time.Second)
