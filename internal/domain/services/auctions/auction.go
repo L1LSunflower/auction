@@ -452,23 +452,27 @@ func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error
 
 	context_with_depends.DBTxCommit(ctx)
 
+	go SendPrice(request.AuctionID, request.Price)
+
+	return auction.Price, nil
+}
+
+func SendPrice(auctionID int, price float64) {
 	for {
-		if CheckEvent(request.AuctionID) {
+		if CheckEvent(auctionID) {
 			break
 		}
 		time.Sleep(1 * time.Second)
 	}
 
-	if CheckAuction(request.AuctionID) {
-		RegisterNewEvent(request.AuctionID, request.Price)
+	if CheckAuction(auctionID) {
+		RegisterNewEvent(auctionID, price)
 		for {
-			if DataSent(request.AuctionID) {
-				DeleteEvent(request.AuctionID)
+			if DataSent(auctionID) {
+				DeleteEvent(auctionID)
 				break
 			}
 			time.Sleep(3 * time.Second)
 		}
 	}
-
-	return auction.Price, nil
 }
