@@ -1,24 +1,30 @@
 package auctions
 
-var eventMap = map[int]float64{}
+import (
+	"fmt"
+	"github.com/gofiber/websocket/v2"
+)
 
-var stack = map[int]map[int]bool{}
+var eventMap = map[int]map[string]any{}
 
-func RegisterNew(auctionID, wsID int) {
+var stack = map[int]map[*websocket.Conn]bool{}
+
+func RegisterNew(auctionID int, ws *websocket.Conn) {
 	if st, ok := stack[auctionID]; !ok {
-		stack[wsID] = map[int]bool{
-			wsID: true,
+		stack[auctionID] = map[*websocket.Conn]bool{
+			ws: true,
 		}
 	} else {
-		st[wsID] = true
+		st[ws] = true
 	}
+	fmt.Printf("\nSTACK: %#v\n\n", stack)
 }
 
 func LengthStackOfAuction(auctionID int) int {
 	if st, ok := stack[auctionID]; ok {
-		return len(st)
+		return len(st) + 1
 	}
-	return 0
+	return 1
 }
 
 func DataSent(auctionID int) bool {
@@ -30,11 +36,11 @@ func DataSent(auctionID int) bool {
 	return true
 }
 
-func SetActual(auctionID, wsID int) {
+func SetActual(auctionID int, wsID *websocket.Conn) {
 	stack[auctionID][wsID] = true
 }
 
-func CheckActual(auctionID, wsID int) bool {
+func CheckActual(auctionID int, wsID *websocket.Conn) bool {
 	return stack[auctionID][wsID]
 }
 
@@ -44,6 +50,10 @@ func DeleteStack(auctionID int) {
 	}
 }
 
+func DeleteConsumer(auctionID int, ws *websocket.Conn) {
+	delete(stack[auctionID], ws)
+}
+
 func CheckAuction(auctionID int) bool {
 	if _, ok := stack[auctionID]; ok {
 		return true
@@ -51,9 +61,12 @@ func CheckAuction(auctionID int) bool {
 	return false
 }
 
-func RegisterNewEvent(auctionID int, price float64) {
+func RegisterNewEvent(auctionID int, userID string, price float64) {
 	if _, ok := eventMap[auctionID]; !ok {
-		eventMap[auctionID] = price
+		eventMap[auctionID] = map[string]any{
+			"user_id": userID,
+			"price":   price,
+		}
 	}
 
 	for wsi := range stack[auctionID] {
@@ -61,7 +74,7 @@ func RegisterNewEvent(auctionID int, price float64) {
 	}
 }
 
-func AuctionPrice(auctionID int) float64 {
+func AuctionPrice(auctionID int) map[string]any {
 	return eventMap[auctionID]
 }
 

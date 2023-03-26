@@ -21,7 +21,6 @@ import (
 func Auction(c *websocket.Conn) {
 	var (
 		auctionID int
-		wsID      int
 		err       error
 	)
 
@@ -73,34 +72,54 @@ func Auction(c *websocket.Conn) {
 		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send data with error: %s", err)))
 	}
 
-	wsID = auctionService.LengthStackOfAuction(auctionID)
-	if wsID == 0 {
-		wsID = 1
-	}
-	auctionService.RegisterNew(auctionID, wsID)
+	auctionService.RegisterNew(auctionID, c)
+	//wsID = auctionService.LengthStackOfAuction(auctionID)
+	//go c.SetCloseHandler(func(code int, text string) error {
+	//	auctionService.DeleteConsumer(auctionID, wsID)
+	//	if err = c.WriteJSON(fiber.Map{"status": "success", "message": "close connection"}); err != nil {
+	//		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send data with error: %s", err)))
+	//	}
+	//	return nil
+	//})
+
+	go Delete(c, auctionID)
 
 	for {
-		Update(c, auctionID, wsID)
+		Update(c, auctionID)
 	}
-
 }
 
-func Update(c *websocket.Conn, auctionID, wsID int) {
+func Delete(c *websocket.Conn, auctionID int) {
+	closeReq := &auctions.WSClose{}
+	if err := c.ReadJSON(closeReq); err != nil {
+		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to read data from ws with error: %s", err)))
+	}
+
+	if closeReq.Close {
+		if err := c.Close(); err != nil {
+			logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to close connection with error: %s", err)))
+		}
+	}
+
+	auctionService.DeleteConsumer(auctionID, c)
+}
+
+func Update(c *websocket.Conn, auctionID int) {
 	if !auctionService.CheckEvent(auctionID) {
-		time.Sleep(5 * time.Second)
-		Update(c, auctionID, wsID)
-	}
-
-	if auctionService.CheckActual(auctionID, wsID) {
 		time.Sleep(1 * time.Second)
-		Update(c, auctionID, wsID)
+		Update(c, auctionID)
 	}
 
-	price := auctionService.AuctionPrice(auctionID)
+	if auctionService.CheckActual(auctionID, c) {
+		time.Sleep(1 * time.Second)
+		Update(c, auctionID)
+	}
 
-	if err := c.WriteJSON(fiber.Map{"status": "success", "price": price}); err != nil {
+	userAndPrice := auctionService.AuctionPrice(auctionID)
+
+	if err := c.WriteJSON(fiber.Map{"status": "success", "user_id": userAndPrice["user_id"], "price": userAndPrice["price"]}); err != nil {
 		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send data with error: %s", err)))
 	}
 
-	auctionService.SetActual(auctionID, wsID)
+	auctionService.SetActual(auctionID, c)
 }

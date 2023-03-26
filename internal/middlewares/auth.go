@@ -36,8 +36,8 @@ func Auth() fiber.Handler {
 			return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
 		}
 
-		if tokens.AccessToken != at {
-			return responses.NewSuccessResponse(ctx, errorhandler.AuthRequired)
+		if at != tokens.AccessToken {
+			return responses.NewFailedResponse(ctx, errorhandler.AuthRequired)
 		}
 
 		ctx.Locals(requests.UserIDCtx, id)
@@ -58,17 +58,17 @@ func AuthWS(conn *websocket.Conn, ctx context.Context) (*usersRequest.AuthWS, an
 	tokens, err := redis_repository.UserInterface.Tokens(ctx, auth.ID)
 	if err != nil && err != redis.Nil {
 		// Status code 125 = message: "auth required"
-		return nil, responses.NewErrorResponse(126, errorhandler.ErrGetTokens)
+		return nil, responses.NewErrorResponse(125, errorhandler.AuthRequired)
 	}
 
 	if tokens == nil {
 		// Status code 126 = message: "err get tokens"
-		return nil, responses.NewErrorResponse(126, errorhandler.ErrGetTokens)
+		return nil, responses.NewErrorResponse(125, errorhandler.AuthRequired)
 	}
 
 	if tokens.AccessToken != auth.Access {
 		// Status code 124 = message: "wrong tokens"
-		return nil, responses.NewErrorResponse(124, errorhandler.WrongTokens)
+		return nil, responses.NewErrorResponse(125, errorhandler.AuthRequired)
 	}
 
 	return auth, nil

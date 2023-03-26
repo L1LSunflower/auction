@@ -446,18 +446,18 @@ func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error
 		return 0, errorhandler.ErrPriceLow
 	}
 
-	if err = db_repository.AuctionInterface.SetPrice(ctx, request.AuctionID, request.Price); err != nil {
+	if err = db_repository.AuctionInterface.SetPrice(ctx, request.AuctionID, user.ID, request.Price); err != nil {
 		return 0, errorhandler.ErrSetPrice
 	}
 
 	context_with_depends.DBTxCommit(ctx)
 
-	go SendPrice(request.AuctionID, request.Price)
+	go SendPrice(request.AuctionID, user.ID, request.Price)
 
 	return request.Price, nil
 }
 
-func SendPrice(auctionID int, price float64) {
+func SendPrice(auctionID int, userID string, price float64) {
 	for {
 		if !CheckEvent(auctionID) {
 			break
@@ -466,7 +466,7 @@ func SendPrice(auctionID int, price float64) {
 	}
 
 	if CheckAuction(auctionID) {
-		RegisterNewEvent(auctionID, price)
+		RegisterNewEvent(auctionID, userID, price)
 		for {
 			if DataSent(auctionID) {
 				DeleteEvent(auctionID)
