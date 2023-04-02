@@ -255,3 +255,25 @@ func ProfileHistory(ctx *fiber.Ctx) error {
 
 	return responses.UserProfileHistory(ctx, userProfile)
 }
+
+func ProfileCompleted(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*usersRequest.User)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	userCompleted, err := userService.CompletedAuctions(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.CompletedAuctions(ctx, userCompleted)
+}

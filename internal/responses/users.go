@@ -123,3 +123,20 @@ func UserProfileHistory(ctx *fiber.Ctx, userProfile *aggregates.ProfileHistoryAg
 
 	return ctx.JSON(userProfileResponse)
 }
+
+func CompletedAuctions(ctx *fiber.Ctx, userProfile *aggregates.ProfileHistoryAggregation) error {
+	userProfileResponse := &structs.ProfileHistory{Status: successStatus}
+
+	for _, auction := range userProfile.Auctions {
+		file := GetFirstVideoOrImage(auction.Files)
+		userProfileResponse.Auctions = append(userProfileResponse.Auctions, structs.AuctionWithFile{
+			ID:               auction.Auction.ID,
+			Status:           auction.Auction.Status,
+			ShortDescription: auction.Auction.ShortDescription,
+			Category:         auction.Auction.Category,
+			Files:            file,
+		})
+	}
+
+	return ctx.JSON(userProfileResponse)
+}

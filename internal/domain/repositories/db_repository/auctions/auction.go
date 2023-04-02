@@ -483,3 +483,43 @@ func (r *Repository) SetPrice(ctx context.Context, auctionID int, userID string,
 
 	return nil
 }
+
+func (r *Repository) Completed(ctx context.Context, ownerID string) ([]*entities.Auction, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var auctions []*entities.Auction
+	fields := []string{
+		"a.id",
+		"a.status",
+		"a.short_description",
+		"a.item_id",
+		"a.category",
+	}
+
+	query := fmt.Sprintf(`select %s from auctions a where winner_id=?`, strings.Join(fields, fieldsSeparator))
+	rows, err := db.Query(query, ownerID)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		auction := &entities.Auction{}
+		shortDescription := sql.NullString{}
+		if err = rows.Scan(
+			&auction.ID,
+			&auction.Status,
+			&shortDescription,
+			&auction.ItemID,
+			&auction.Category,
+		); err != nil {
+			return nil, err
+		}
+		auction.ShortDescription = shortDescription.String
+		auctions = append(auctions, auction)
+	}
+
+	return auctions, nil
+}

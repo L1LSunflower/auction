@@ -175,7 +175,24 @@ func DeleteValidator(ctx *fiber.Ctx) error {
 func ProfileValidator(ctx *fiber.Ctx) error {
 	var ok bool
 	request := &userRequest.User{}
-	
+
+	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err := validator.ValidateRequest(request); err != nil {
+		return responses.NewValidationErrResponse(ctx, err)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func ProfileCompleted(ctx *fiber.Ctx) error {
+	var ok bool
+	request := &userRequest.User{}
+
 	if request.ID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.ID == "" {
 		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
 	}

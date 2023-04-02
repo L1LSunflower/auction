@@ -13,6 +13,7 @@ type AuctionInterface interface {
 	Auction(ctx context.Context, id int) (*entities.Auction, error)
 	Auctions(ctx context.Context, where, tags, groupBy string, metadata *metadata.Metadata) ([]*entities.Auction, error)
 	ByOwnerID(ctx context.Context, ownerID string) ([]*entities.Auction, error)
+	Completed(ctx context.Context, ownerID string) ([]*entities.Auction, error)
 	Update(ctx context.Context, auction *entities.Auction) error
 	Start(ctx context.Context, id int, endedDate time.Time) error
 	End(ctx context.Context, id int) error

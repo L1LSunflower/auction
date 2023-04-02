@@ -151,3 +151,35 @@ func OwnersAuctions(ctx context.Context, request *userRequest.User) (*aggregates
 
 	return userProfile, nil
 }
+
+func CompletedAuctions(ctx context.Context, request *userRequest.User) (*aggregates.ProfileHistoryAggregation, error) {
+	var err error
+	userProfile := &aggregates.ProfileHistoryAggregation{}
+
+	if userProfile.User, err = db_repository.UserInterface.User(ctx, request.ID); err != nil || userProfile.User == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	auctions, err := db_repository.AuctionInterface.Completed(ctx, userProfile.User.ID)
+	if err != nil {
+		return nil, errorhandler.ErrGetAuctions
+	}
+
+	for _, auction := range auctions {
+		var files []*entities.File
+		auctionWithFile := &aggregates.AuctionFile{}
+
+		if files, err = db_repository.FilesInterface.Files(ctx, auction.ItemID); err != nil {
+			return nil, err
+		}
+
+		auctionWithFile.Auction = &entities.Auction{ID: auction.ID, ShortDescription: auction.ShortDescription, Status: auction.Status, Category: auction.Category}
+
+		for _, file := range files {
+			auctionWithFile.Files = append(auctionWithFile.Files, file.Name)
+		}
+		userProfile.Auctions = append(userProfile.Auctions, auctionWithFile)
+	}
+
+	return userProfile, nil
+}
