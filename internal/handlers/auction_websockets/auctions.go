@@ -73,15 +73,6 @@ func Auction(c *websocket.Conn) {
 	}
 
 	auctionService.RegisterNew(auctionID, c)
-	//wsID = auctionService.LengthStackOfAuction(auctionID)
-	//go c.SetCloseHandler(func(code int, text string) error {
-	//	auctionService.DeleteConsumer(auctionID, wsID)
-	//	if err = c.WriteJSON(fiber.Map{"status": "success", "message": "close connection"}); err != nil {
-	//		logger.Log.Error(message.NewMessage(fmt.Sprintf("failed to send data with error: %s", err)))
-	//	}
-	//	return nil
-	//})
-
 	go Delete(c, auctionID)
 
 	for {

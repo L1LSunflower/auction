@@ -34,18 +34,19 @@ func Create(ctx context.Context, request *auctionReq.Create) (*aggregates.Auctio
 		return nil, errorhandler.ErrUserNotExist
 	}
 
-	if auctionAgg.Auction, err = db_repository.AuctionInterface.ActiveAuction(ctx, request.OwnerID); err != nil {
-		return nil, errorhandler.InternalError
-	}
+	// Temporary commented
+	//if auctionAgg.Auction, err = db_repository.AuctionInterface.ActiveAuction(ctx, request.OwnerID); err != nil {
+	//	return nil, errorhandler.InternalError
+	//}
+	//
+	//if auctionAgg.Auction.Status == entities.ActiveStatus {
+	//	return nil, errorhandler.ErrActiveAuctionExist
+	//}
 
-	if auctionAgg.Auction.Status == entities.ActiveStatus {
-		return nil, errorhandler.ErrActiveAuctionExist
-	}
-
-	var auctions int
-	if auctions, err = db_repository.AuctionInterface.CountInactiveAuctions(ctx, request.OwnerID); err != nil && auctions >= 5 {
-		return nil, errorhandler.ErrCreateLimit
-	}
+	//var auctions int
+	//if auctions, err = db_repository.AuctionInterface.CountInactiveAuctions(ctx, request.OwnerID); err != nil && auctions >= 10 {
+	//	return nil, errorhandler.ErrCreateLimit
+	//}
 
 	auctionAgg.CreateItem(request.ItemTitle, request.ItemDescription)
 	if err = db_repository.ItemInterface.Create(ctx, auctionAgg.Item); err != nil {

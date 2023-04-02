@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	codeLegnth   = 4
+	codeLength   = 4
 	tokenLength  = 32
 	codeCharset  = "0123456789"
 	tokenCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -19,7 +19,7 @@ var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
 func GenerateRandomCode() string {
-	return stringWithCharset(codeLegnth, codeCharset)
+	return stringWithCharset(codeLength, codeCharset)
 }
 
 func GenerateToken() *entities.Tokens {

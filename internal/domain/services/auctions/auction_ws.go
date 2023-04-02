@@ -51,7 +51,11 @@ func DeleteStack(auctionID int) {
 }
 
 func DeleteConsumer(auctionID int, ws *websocket.Conn) {
-	delete(stack[auctionID], ws)
+	if len(stack[auctionID]) == 1 {
+		delete(stack, auctionID)
+	} else {
+		delete(stack[auctionID], ws)
+	}
 }
 
 func CheckAuction(auctionID int) bool {
