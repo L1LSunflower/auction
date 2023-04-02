@@ -2,6 +2,8 @@ package auctions
 
 import (
 	"fmt"
+	"github.com/L1LSunflower/auction/pkg/logger"
+	"github.com/L1LSunflower/auction/pkg/logger/message"
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -17,7 +19,7 @@ func RegisterNew(auctionID int, ws *websocket.Conn) {
 	} else {
 		st[ws] = true
 	}
-	fmt.Printf("\nSTACK: %#v\n\n", stack)
+	logger.Log.Info(message.NewMessage(fmt.Sprintf("STACK: %#v", stack)))
 }
 
 func LengthStackOfAuction(auctionID int) int {
@@ -56,6 +58,7 @@ func DeleteConsumer(auctionID int, ws *websocket.Conn) {
 	} else {
 		delete(stack[auctionID], ws)
 	}
+	logger.Log.Info(message.NewMessage(fmt.Sprintf("STACK: %#v", stack)))
 }
 
 func CheckAuction(auctionID int) bool {
