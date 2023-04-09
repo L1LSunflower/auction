@@ -22,6 +22,10 @@ type Auction struct {
 	EndedAt          string   `json:"end_date,omitempty"`
 	Files            []string `json:"files,omitempty"`
 	Tags             []string `json:"tags,omitempty"`
+	Visitor          bool     `json:"visitor,omitempty"`
+	VisitStartDate   string   `json:"visit_start_date"`
+	VisitEndDate     string   `json:"visit_end_date"`
+	VisitorsCount    int      `json:"visitors_count,omitempty"`
 }
 
 type AuctionsWithFile struct {
@@ -82,4 +86,28 @@ type SetPrice struct {
 	Status string  `json:"status,required"`
 	Price  float64 `json:"price,required"`
 	Date   string  `json:"date"`
+}
+
+type SettedVisit struct {
+	Status    string `json:"status,required"`
+	StartDate string `json:"start_date,required"`
+	EndDate   string `json:"end_date,required"`
+}
+
+type Visitors struct {
+	Status          string     `json:"status"`
+	Count           int        `json:"count"`
+	AuctionVisitors []*Visitor `json:"visitors"`
+}
+
+type Visitor struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
+}
+
+type UpdateVisit struct {
+	Status    string `json:"status,required"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
 }

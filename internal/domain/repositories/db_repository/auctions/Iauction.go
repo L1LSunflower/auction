@@ -24,11 +24,21 @@ type AuctionInterface interface {
 	CountInactiveAuctions(ctx context.Context, ownerID string) (int, error)
 	DeleteByOwnerID(ctx context.Context, ownerID string) error
 	UpdatePrice(ctx context.Context, id int, price float64) error
-	CreateMember(ctx context.Context, auctionID int, userID string) (*entities.AuctionMember, error)
+	CreateMember(ctx context.Context, member *entities.AuctionMember) error
 	Member(ctx context.Context, auctionID int, userID string) (*entities.AuctionMember, error)
+	Members(ctx context.Context, auctionID int) ([]*entities.AuctionMember, error)
 	ActivateAuctions(ctx context.Context) error
 	EndAuctions(ctx context.Context) error
 	SetPrice(ctx context.Context, auctionID int, userID string, price float64) error
+	SetVisit(ctx context.Context, visit *entities.AuctionVisit) error
+	Visitors(ctx context.Context, auctionID int) ([]*entities.AuctionVisitor, error)
+	Visitor(ctx context.Context, auctionID int, userID string) (*entities.AuctionVisitor, error)
+	Visit(ctx context.Context, visitor *entities.AuctionVisitor) error
+	Unvisit(ctx context.Context, auctionID int, userID string) error
+	VisitorsCount(ctx context.Context, auctionID int) (int, error)
+	StartVisit(ctx context.Context) error
+	EndVisit(ctx context.Context) error
+	Owner(ctx context.Context, userID string) (bool, error)
 }
 
 func NewRepository() AuctionInterface {

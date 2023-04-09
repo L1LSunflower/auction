@@ -68,3 +68,32 @@ type SetPrice struct {
 	AuctionID int     `validate:"required"`
 	Price     float64 `json:"price" validate:"required"`
 }
+
+type SetVisit struct {
+	UserID    string    `validate:"required"`
+	AuctionID int       `validate:"required"`
+	StartDate time.Time `json:"start_date" validate:"required"`
+	EndDate   time.Time `json:"end_date" validate:"required"`
+}
+
+type Visit struct {
+	UserID    string `validate:"required"`
+	AuctionID int    `validate:"required"`
+}
+
+type Unvisit struct {
+	UserID    string `validate:"required"`
+	AuctionID int    `validate:"required"`
+}
+
+type Visitor struct {
+	UserID    string `validate:"required"`
+	AuctionID int    `validate:"required"`
+}
+
+type UpdateVisit struct {
+	UserID    string    `validate:"required"`
+	AuctionID int       `validate:"required"`
+	StartDate time.Time `json:"start_date" validate:"required"`
+	EndDate   time.Time `json:"end_date" validate:"required"`
+}

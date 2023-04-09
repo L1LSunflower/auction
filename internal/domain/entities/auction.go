@@ -7,6 +7,11 @@ const (
 	ActiveStatus    = "active"
 	CompletedStatus = "completed"
 	DateFormat      = "2006-01-02 15:04:05"
+	// Auction visit status
+	VisitNotSet = "not set"
+	VisitSet    = "set"
+	VisitOpened = "opened"
+	VisitClosed = "closed"
 )
 
 type Auction struct {
@@ -25,9 +30,21 @@ type Auction struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        time.Time
+	VisitStatus      string
+	VisitStartDate   time.Time
+	VisitEndDate     time.Time
 }
 
 type AuctionMember struct {
 	AuctionID     int
 	ParticipantID string
+	Price         float64
+	FirstName     string
+	LastName      string
+}
+
+type AuctionVisit struct {
+	AuctionID int
+	StartDate time.Time
+	EndDate   time.Time
 }

@@ -121,6 +121,21 @@ func Auction(ctx context.Context, request *auctionReq.Auction) (*aggregates.Auct
 		}
 	}
 
+	if auctionAgg.Auction.OwnerID == auctionAgg.User.ID {
+		if auctionAgg.VisitorsCount, err = db_repository.AuctionInterface.VisitorsCount(ctx, auctionAgg.Auction.ID); err != nil {
+			return nil, err
+		}
+	} else {
+		visitor, err := db_repository.AuctionInterface.Visitor(ctx, auctionAgg.Auction.ID, auctionAgg.User.ID)
+		if err != nil {
+			return nil, errorhandler.ErrAuctionVisitor
+		}
+
+		if len(visitor.UserID) > 0 {
+			auctionAgg.AuctionVisitor = true
+		}
+	}
+
 	return auctionAgg, nil
 }
 
@@ -417,8 +432,15 @@ func Participate(ctx context.Context, request *auctionReq.Participate) (*entitie
 		return nil, errorhandler.ErrAlreadyAuctionMember
 	}
 
-	auctionMember, err = db_repository.AuctionInterface.CreateMember(ctx, auction.ID, user.ID)
-	if err != nil || auctionMember == nil {
+	member := &entities.AuctionMember{
+		AuctionID:     auction.ID,
+		ParticipantID: user.ID,
+		Price:         0,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+	}
+
+	if err = db_repository.AuctionInterface.CreateMember(ctx, member); err != nil {
 		return nil, errorhandler.ErrParticipate
 	}
 
@@ -456,6 +478,189 @@ func SetPrice(ctx context.Context, request *auctionReq.SetPrice) (float64, error
 	go SendPrice(request.AuctionID, user.ID, request.Price)
 
 	return request.Price, nil
+}
+
+func SetVisit(ctx context.Context, request *auctionReq.SetVisit) (*entities.AuctionVisit, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return nil, err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction.CreatedAt.IsZero() || auction.VisitStatus != entities.VisitNotSet {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	visit := &entities.AuctionVisit{
+		AuctionID: auction.ID,
+		StartDate: request.StartDate,
+		EndDate:   request.EndDate,
+	}
+
+	if err = db_repository.AuctionInterface.SetVisit(ctx, visit); err != nil {
+		return nil, errorhandler.ErrSetVisit
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	return visit, nil
+}
+
+func Visit(ctx context.Context, request *auctionReq.Visit) error {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction.CreatedAt.IsZero() || auction.VisitStatus != entities.VisitSet && auction.VisitStatus != entities.VisitOpened {
+		return errorhandler.ErrAuctionNotExist
+	}
+
+	visitor, err := db_repository.AuctionInterface.Visitor(ctx, auction.ID, user.ID)
+	if err != nil {
+		return errorhandler.ErrAuctionVisitor
+	}
+
+	if len(visitor.UserID) > 0 {
+		return errorhandler.ErrAlreadyVisitor
+	}
+
+	auctionVisitor := &entities.AuctionVisitor{
+		AuctionID: auction.ID,
+		UserID:    user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Phone:     user.Phone,
+	}
+
+	if err = db_repository.AuctionInterface.Visit(ctx, auctionVisitor); err != nil {
+		return errorhandler.ErrVisit
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	return nil
+}
+
+func Unvisit(ctx context.Context, request *auctionReq.Unvisit) error {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	auctionVisitor, err := db_repository.AuctionInterface.Visitor(ctx, request.AuctionID, request.UserID)
+	if err != nil || auctionVisitor == nil {
+		return errorhandler.ErrUnvisit
+	}
+
+	if len(auctionVisitor.UserID) <= 0 {
+		return errorhandler.ErrUnvisit
+	}
+
+	if err = db_repository.AuctionInterface.Unvisit(ctx, request.AuctionID, request.UserID); err != nil {
+		return errorhandler.ErrUnvisit
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	return nil
+}
+
+func Visitors(ctx context.Context, request *auctionReq.Visitor) ([]*entities.AuctionVisitor, error) {
+	var err error
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	if len(user.ID) <= 0 {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction == nil {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	if auction.ID <= 0 {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	if user.ID != auction.OwnerID {
+		return nil, errorhandler.ErrNotAuctionOwner
+	}
+
+	auctionVisitors, err := db_repository.AuctionInterface.Visitors(ctx, request.AuctionID)
+	if err != nil {
+		return nil, errorhandler.ErrAuctionVisitors
+	}
+
+	return auctionVisitors, nil
+}
+
+func UpdateVisit(ctx context.Context, request *auctionReq.UpdateVisit) (*entities.AuctionVisit, error) {
+	var err error
+	if err = context_with_depends.StartDBTx(ctx); err != nil {
+		return nil, err
+	}
+	defer context_with_depends.DBTxRollback(ctx)
+
+	user, err := db_repository.UserInterface.User(ctx, request.UserID)
+	if err != nil || user == nil {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	if len(user.ID) <= 0 {
+		return nil, errorhandler.ErrUserNotExist
+	}
+
+	auction, err := db_repository.AuctionInterface.Auction(ctx, request.AuctionID)
+	if err != nil || auction == nil {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	if auction.ID <= 0 {
+		return nil, errorhandler.ErrAuctionNotExist
+	}
+
+	if user.ID != auction.OwnerID {
+		return nil, errorhandler.ErrNotAuctionOwner
+	}
+
+	if auction.VisitStatus == entities.VisitOpened || auction.VisitStatus == entities.VisitClosed {
+		return nil, errorhandler.ErrUpdateVisit
+	}
+
+	auction.VisitStartDate = request.StartDate
+	auction.VisitEndDate = request.EndDate
+
+	err = db_repository.AuctionInterface.Update(ctx, auction)
+	if err != nil {
+		return nil, errorhandler.ErrUpdateAuction
+	}
+
+	context_with_depends.DBTxCommit(ctx)
+
+	return &entities.AuctionVisit{
+		AuctionID: auction.ID,
+		StartDate: request.StartDate,
+		EndDate:   request.EndDate,
+	}, nil
 }
 
 func SendPrice(auctionID int, userID string, price float64) {

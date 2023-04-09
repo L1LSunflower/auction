@@ -15,8 +15,10 @@ import (
 )
 
 const (
-	StartAuctionsInterval = 15 * time.Minute
-	EndAuctionsInterval   = 20 * time.Minute
+	StartAuctionsInterval = 1 * time.Minute
+	EndAuctionsInterval   = 2 * time.Minute
+	StartVisitInterval    = 3 * time.Minute
+	EndVisitInterval      = 4 * time.Minute
 )
 
 func StartWorkers() {
@@ -30,4 +32,6 @@ func StartWorkers() {
 
 	go auctionsWorkers.StartAuctions(ctx, StartAuctionsInterval)
 	go auctionsWorkers.EndAuctions(ctx, EndAuctionsInterval)
+	go auctionsWorkers.StartVisits(ctx, StartVisitInterval)
+	go auctionsWorkers.EndVisits(ctx, EndVisitInterval)
 }

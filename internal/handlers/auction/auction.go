@@ -212,3 +212,111 @@ func SetPrice(ctx *fiber.Ctx) error {
 
 	return responses.SetPrice(ctx, price)
 }
+
+func SetVisit(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.SetVisit)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	settedVisit, err := auctionService.SetVisit(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.SettedVisit(ctx, settedVisit)
+}
+
+func Visit(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.Visit)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	if err = auctionService.Visit(contxt, request); err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.Visit(ctx)
+}
+
+func Unvisit(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.Unvisit)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	if err = auctionService.Unvisit(contxt, request); err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.Unvisit(ctx)
+}
+
+func Visitors(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.Visitor)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	auctionVisitors, err := auctionService.Visitors(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.Visitors(ctx, auctionVisitors)
+}
+
+func UpdateVisit(ctx *fiber.Ctx) error {
+	request, ok := ctx.Locals(requests.RequestKey).(*auctionReq.UpdateVisit)
+	if !ok {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	dbConn := db.SqlInstance(config.GetConfig().DB.DBDriver, config.GetConfig().DB.DBString).DB
+	redisConn := redisdb.RedisInstance().RedisClient
+
+	contxt, err := context_with_depends.ContextWithDepends(context.Background(), dbConn, redisConn)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrDependency)
+	}
+
+	updatedVisit, err := auctionService.UpdateVisit(contxt, request)
+	if err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	return responses.UpdateVisit(ctx, updatedVisit)
+}

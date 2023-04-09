@@ -242,3 +242,120 @@ func SetPrice(ctx *fiber.Ctx) error {
 
 	return ctx.Next()
 }
+
+func SetVisit(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	request := &requestAuction.SetVisit{}
+
+	if err = ctx.BodyParser(request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if err = validator.ValidateRequest(request); err != nil {
+		return responses.NewFailedResponse(ctx, err)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func Visit(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	request := &requestAuction.Visit{}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func Unvisit(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	request := &requestAuction.Unvisit{}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func Visitors(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	request := &requestAuction.Visitor{}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}
+
+func UpdateVisit(ctx *fiber.Ctx) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	request := &requestAuction.UpdateVisit{}
+
+	if err = ctx.BodyParser(request); err != nil {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.AuctionID, err = ctx.ParamsInt("id"); err != nil || request.AuctionID <= 0 {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	if request.UserID, ok = ctx.Locals(requests.UserIDCtx).(string); !ok || request.UserID == "" {
+		return responses.NewFailedResponse(ctx, errorhandler.ErrParseRequest)
+	}
+
+	ctx.Locals(requests.RequestKey, request)
+
+	return ctx.Next()
+}

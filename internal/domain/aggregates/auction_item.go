@@ -6,13 +6,15 @@ import (
 )
 
 type AuctionAggregation struct {
-	OwnerUser *entities.User
-	User      *entities.User
-	Auction   *entities.Auction
-	Item      *entities.Item
-	Tags      []*entities.Tag
-	ItemFiles []*entities.File
-	Member    bool
+	OwnerUser      *entities.User
+	User           *entities.User
+	Auction        *entities.Auction
+	Item           *entities.Item
+	Tags           []*entities.Tag
+	ItemFiles      []*entities.File
+	Member         bool
+	AuctionVisitor bool
+	VisitorsCount  int
 }
 
 func (a *AuctionAggregation) CreateItem(name, description string) {

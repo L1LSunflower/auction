@@ -19,6 +19,14 @@ import (
 func SetRoutes(app *fiber.App) {
 	app.Get("/__health", Healthcheck)
 
+	app.Use("/auctions", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+
+		return fiber.ErrUpgradeRequired
+	})
 	app.Get("/auctions/:id", middlewares.Attempts(), websocket.New(auction_websockets.Auction))
 
 	v1 := app.Group("/v1")
@@ -41,7 +49,7 @@ func SetRoutes(app *fiber.App) {
 	v1.Put("/users", middlewares.Auth(), usersValidator.UpdateValidator, usersHandler.Update)
 	v1.Delete("/users", middlewares.Auth(), usersValidator.DeleteValidator, usersHandler.Delete)
 
-	// Auction
+	// Auction routes
 	v1.Post("/auctions", middlewares.Auth(), auctionValidator.Create, auctionHandler.Create)
 	v1.Get("/auctions", middlewares.Auth(), auctionValidator.Auctions, auctionHandler.Auctions)
 	v1.Get("/auctions/:id", middlewares.Auth(), auctionValidator.Auction, auctionHandler.Auction)
@@ -51,6 +59,11 @@ func SetRoutes(app *fiber.App) {
 	v1.Post("/auctions/:id/end", middlewares.Auth(), auctionValidator.End, auctionHandler.End)
 	v1.Post("/auctions/:id/participate", middlewares.Auth(), auctionValidator.Participate, auctionHandler.Participate)
 	v1.Post("/auctions/:id/set_price", middlewares.Auth(), auctionValidator.SetPrice, auctionHandler.SetPrice)
+	v1.Post("/auctions/:id/set_visit", middlewares.Auth(), auctionValidator.SetVisit, auctionHandler.SetVisit)
+	v1.Put("/auctions/:id/set_visit", middlewares.Auth(), auctionValidator.UpdateVisit, auctionHandler.UpdateVisit)
+	v1.Post("/auctions/:id/visit", middlewares.Auth(), auctionValidator.Visit, auctionHandler.Visit)
+	v1.Post("/auctions/:id/unvisit", middlewares.Auth(), auctionValidator.Unvisit, auctionHandler.Unvisit)
+	v1.Get("/auctions/:id/visitors", middlewares.Auth(), auctionValidator.Visitors, auctionHandler.Visitors)
 
 	// Balance routes
 	balance := v1.Group("/balance")

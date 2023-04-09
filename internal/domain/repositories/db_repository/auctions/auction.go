@@ -24,6 +24,7 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		return err
 	}
 
+	// TODO: set visit_status
 	now := time.Now()
 	auction.CreatedAt = now
 	auction.UpdatedAt = now
@@ -38,9 +39,10 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		"started_at",
 		"created_at",
 		"updated_at",
+		"visit_status",
 	}
 
-	query := fmt.Sprintf("insert into auctions (%s) values (?, ?, ?, ?, ?, ?, ?, ?, now(), now())", strings.Join(fields, fieldsSeparator))
+	query := fmt.Sprintf("insert into auctions (%s) values (?, ?, ?, ?, ?, ?, ?, ?, now(), now(), ?)", strings.Join(fields, fieldsSeparator))
 	tag, err := tx.Exec(
 		query,
 		auction.Category,
@@ -51,6 +53,7 @@ func (r *Repository) Create(ctx context.Context, auction *entities.Auction) erro
 		auction.MinPrice,
 		auction.Status,
 		auction.StartedAt,
+		entities.VisitNotSet,
 	)
 	if err != nil {
 		return err
@@ -78,6 +81,9 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	price := sql.NullFloat64{}
 	startedAt := sql.NullTime{}
 	endedAt := sql.NullTime{}
+	visitStatus := sql.NullString{}
+	visitStartedDate := sql.NullTime{}
+	visitEndDate := sql.NullTime{}
 	fields := []string{
 		"id",
 		"category",
@@ -93,6 +99,9 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 		"price",
 		"created_at",
 		"updated_at",
+		"visit_status",
+		"visit_start_date",
+		"visit_end_date",
 	}
 
 	query := fmt.Sprintf("select %s from auctions where id=? and deleted_at is null", strings.Join(fields, fieldsSeparator))
@@ -114,7 +123,10 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 		&price,
 		&auction.CreatedAt,
 		&auction.UpdatedAt,
-	); err != nil {
+		&visitStatus,
+		&visitStartedDate,
+		&visitEndDate,
+	); err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 	auction.ShortDescription = shortDescription.String
@@ -122,6 +134,9 @@ func (r *Repository) Auction(ctx context.Context, id int) (*entities.Auction, er
 	auction.Price = price.Float64
 	auction.StartedAt = startedAt.Time
 	auction.EndedAt = endedAt.Time
+	auction.VisitStatus = visitStatus.String
+	auction.VisitStartDate = visitStartedDate.Time
+	auction.VisitEndDate = visitEndDate.Time
 
 	return auction, nil
 }
@@ -196,6 +211,8 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 		"minimal_price=?",
 		"short_description=?",
 		"started_at=?",
+		"visit_start_date=?",
+		"visit_end_date=?",
 		"updated_at=now()",
 	}
 
@@ -206,6 +223,8 @@ func (r *Repository) Update(ctx context.Context, auction *entities.Auction) erro
 		auction.MinPrice,
 		auction.ShortDescription,
 		auction.StartedAt,
+		auction.VisitStartDate,
+		auction.VisitEndDate,
 		auction.ID,
 	); err != nil {
 		return err
@@ -451,7 +470,7 @@ func (r *Repository) ActivateAuctions(ctx context.Context) error {
 		return err
 	}
 
-	if _, err = db.Query("update auctions set status=?, ended_at=now() + interval 12 hour where status=? and started_at <= now() and deleted_at is null", entities.ActiveStatus, entities.InactiveStatus); err != nil {
+	if _, err = db.Exec("update auctions set status=?, ended_at=now() + interval 12 hour where status=? and started_at <= now() and deleted_at is null", entities.ActiveStatus, entities.InactiveStatus); err != nil {
 		return err
 	}
 
@@ -464,7 +483,7 @@ func (r *Repository) EndAuctions(ctx context.Context) error {
 		return err
 	}
 
-	if _, err = db.Query("update auctions set status=? where status=? and ended_at <= now() and deleted_at is null", entities.CompletedStatus, entities.ActiveStatus); err != nil {
+	if _, err = db.Exec("update auctions set status=? where status=? and ended_at <= now() and deleted_at is null", entities.CompletedStatus, entities.ActiveStatus); err != nil {
 		return err
 	}
 
@@ -481,10 +500,14 @@ func (r *Repository) SetPrice(ctx context.Context, auctionID int, userID string,
 		return err
 	}
 
+	if err = tx.QueryRow("update auction_members set price=? where auction_id=? and participant_id=?", price, auctionID, userID).Err(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (r *Repository) Completed(ctx context.Context, ownerID string) ([]*entities.Auction, error) {
+func (r *Repository) Completed(ctx context.Context, userID string) ([]*entities.Auction, error) {
 	db, err := context_with_depends.GetDb(ctx)
 	if err != nil {
 		return nil, err
@@ -499,8 +522,8 @@ func (r *Repository) Completed(ctx context.Context, ownerID string) ([]*entities
 		"a.category",
 	}
 
-	query := fmt.Sprintf(`select %s from auctions a where winner_id=?`, strings.Join(fields, fieldsSeparator))
-	rows, err := db.Query(query, ownerID)
+	query := fmt.Sprintf(`select %s from auctions a where winner_id=? and status=?`, strings.Join(fields, fieldsSeparator))
+	rows, err := db.Query(query, userID, entities.CompletedStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -522,4 +545,186 @@ func (r *Repository) Completed(ctx context.Context, ownerID string) ([]*entities
 	}
 
 	return auctions, nil
+}
+
+func (r *Repository) SetVisit(ctx context.Context, visit *entities.AuctionVisit) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	fields := []string{
+		"visit_status=?",
+		"visit_start_date=?",
+		"visit_end_date=?",
+	}
+
+	query := fmt.Sprintf("update auctions set %s where id=?", strings.Join(fields, fieldsSeparator))
+	if _, err = tx.Exec(query, entities.VisitSet, visit.StartDate, visit.EndDate, visit.AuctionID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) Visitor(ctx context.Context, auctionID int, userID string) (*entities.AuctionVisitor, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := []string{
+		"auction_id",
+		"user_id",
+		"first_name",
+		"last_name",
+		"phone",
+	}
+
+	auctionVisitor := &entities.AuctionVisitor{}
+
+	query := fmt.Sprintf("select %s from auction_visitors where auction_id=? and user_id=?", strings.Join(fields, fieldsSeparator))
+	firstName := sql.NullString{}
+	LastName := sql.NullString{}
+	if err = db.QueryRow(query, auctionID, userID).Scan(&auctionVisitor.AuctionID, &auctionVisitor.UserID, &firstName, &LastName, &auctionVisitor.Phone); err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	auctionVisitor.FirstName = firstName.String
+	auctionVisitor.LastName = LastName.String
+
+	return auctionVisitor, nil
+}
+
+func (r *Repository) Visit(ctx context.Context, visitor *entities.AuctionVisitor) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	fields := []string{
+		"auction_id",
+		"user_id",
+		"first_name",
+		"last_name",
+		"phone",
+	}
+
+	query := fmt.Sprintf("insert into auction_visitors (%s) values (?, ?, ?, ?, ?)", strings.Join(fields, fieldsSeparator))
+	if err = tx.QueryRow(query, visitor.AuctionID, visitor.UserID, visitor.FirstName, visitor.LastName, visitor.Phone).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) Visitors(ctx context.Context, auctionID int) ([]*entities.AuctionVisitor, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := []string{
+		"auction_id",
+		"user_id",
+		"first_name",
+		"last_name",
+		"phone",
+	}
+
+	var visitors []*entities.AuctionVisitor
+
+	query := fmt.Sprintf("select %s from auction_visitors where auction_id=?", strings.Join(fields, fieldsSeparator))
+	rows, err := db.Query(query, auctionID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	for rows.Next() {
+		visitor := &entities.AuctionVisitor{}
+		firstName := sql.NullString{}
+		lastName := sql.NullString{}
+
+		if err = rows.Scan(&visitor.AuctionID, &visitor.UserID, &firstName, &lastName, &visitor.Phone); err != nil {
+			return nil, err
+		}
+
+		visitor.FirstName = firstName.String
+		visitor.LastName = lastName.String
+
+		visitors = append(visitors, visitor)
+	}
+
+	return visitors, nil
+}
+
+func (r *Repository) Unvisit(ctx context.Context, auctionID int, userID string) error {
+	tx, err := context_with_depends.TxFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.QueryRow("delete from auction_visitors where auction_id=? and user_id=?", auctionID, userID).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) VisitorsCount(ctx context.Context, auctionID int) (int, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	var visitorsCount int
+	if err = db.QueryRow("select count(*) from auction_visitors where auction_id=?", auctionID).Scan(&visitorsCount); err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	return visitorsCount, nil
+}
+
+func (r *Repository) StartVisit(ctx context.Context) error {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = db.Exec("update auctions set visit_status=? where status=? and visit_start_date <= now() and deleted_at is null", entities.VisitSet, entities.VisitOpened); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) EndVisit(ctx context.Context) error {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err = db.Exec("update auctions set visit_status=? where status=? and visit_end_date <= now() and deleted_at is null", entities.VisitOpened, entities.VisitClosed); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) Owner(ctx context.Context, userID string) (bool, error) {
+	db, err := context_with_depends.GetDb(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var owner int
+	if err = db.QueryRow("select exists(select * from auctions where owner_id=?)").Scan(owner); err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+
+	if owner == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }

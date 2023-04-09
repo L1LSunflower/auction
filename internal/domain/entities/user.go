@@ -33,3 +33,11 @@ func NewUserFromRequest(uuid string, request *users.SignUp) *User {
 		City:      request.City,
 	}
 }
+
+type AuctionVisitor struct {
+	AuctionID int
+	UserID    string
+	FirstName string
+	LastName  string
+	Phone     string
+}
